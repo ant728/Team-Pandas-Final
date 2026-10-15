@@ -1,0 +1,15 @@
+# Raw data is recreated by the download code, so it stays out of git
+data/raw/
+
+# Secrets: never commit API keys
+.env
+*.key
+
+# Python / Jupyter clutter
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+
+# OS clutter
+.DS_Store
+Thumbs.db
