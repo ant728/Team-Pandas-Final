@@ -195,7 +195,11 @@ Main chart: cumulative abnormal return by group from 60 trading days before to 2
 | Dashboard "wow" | Tradable-strategy slider | Live "who's next" screen | Event timeline |
 | Who'd pay | Quant PM | Regulators, bank investors | Crypto-exposed equity investor |
 
-**Our pick:** _[team to decide]_. **The data question we need answered first:** _[team to fill in]_.
+**Our pick: Idea B, bank fragility (Seed 6).** It has the most interesting dashboard: a live "who's next" screen of today's listed banks, built from the same measures that explain the 2023 crash. It also has a clear question that regulators and bank investors would pay to answer. It's the riskiest of the three on data, so we're tackling that first.
+
+**The data questions we need answered first:**
+1. How do we link call-report banks (FFIEC RSSD IDs) to their listed holding companies' tickers? The NY Fed link gives CRSP PERMCOs, not tickers.
+2. Where do we get March 2023 returns for the banks that failed or were delisted (SVB, Signature, PacWest)? yfinance has none.
 
 ---
 
