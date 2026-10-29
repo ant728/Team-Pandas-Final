@@ -1,0 +1,7 @@
+ticker,entity_name,entity_type,entity_id,call_report_date,n_banks,n_banks_missing_uninsured,total_assets_bn,uninsured_dep_share,htm_unrealized_loss_bn,afs_unrealized_loss_bn,htm_loss_to_equity,sec_loss_to_equity,htm_share_of_securities,beta,est_obs,car_0_2,car_0_2_mktadj,car_note
+JPM,JPMorgan Chase & Co.,hc,1039502,2022-12-31,2,0,3202.0049,0.5357,36.7250,10.3120,0.1209,0.1549,0.6740,0.8775,221,-0.0184,-0.0124,
+WAL,Western Alliance Bancorporation,hc,2349815,2022-12-31,1,0,67.6838,0.5503,0.1767,0.8805,0.0309,0.1848,0.1538,1.3557,221,-0.7607,-0.7737,
+ZION,"Zions Bancorporation, N.A.",bank,2270,2022-12-31,1,0,89.5449,0.4984,-0.1131,1.6232,-0.0231,0.3086,0.4829,1.1278,221,-0.3553,-0.3613,
+FRC,First Republic Bank,bank,59017,2022-12-31,1,0,212.6389,0.6771,4.7714,0.4700,0.2735,0.3004,0.8944,1.2794,221,-0.8870,-0.8975,
+SIVB,SVB Financial Group,hc,1031449,2022-12-31,1,0,209.0260,0.9388,15.1590,2.5260,0.9808,1.1442,0.7786,,,,,no prices in yfinance (delisted)
+CMA,Comerica Incorporated,hc,1199844,2022-12-31,2,0,85.6072,0.6248,0.0000,3.0332,0.0000,0.6215,0.0000,,,,,no prices in yfinance (delisted)

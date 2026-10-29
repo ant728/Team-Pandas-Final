@@ -1,0 +1,7 @@
+ticker,yf_symbol,entity_name,entity_type,entity_id,note
+JPM,JPM,JPMorgan Chase & Co.,hc,1039502,"FDIC institutions API: JPMorgan Chase Bank NA (CERT 628) and JPMorgan Chase Bank Dearborn (CERT 21761) list RSSDHCR 1039502"
+WAL,WAL,Western Alliance Bancorporation,hc,2349815,"FDIC institutions API: Western Alliance Bank (CERT 57512) lists RSSDHCR 2349815"
+ZION,ZION,"Zions Bancorporation, N.A.",bank,2270,"Zions has no holding company since 2018; the listed entity is the bank itself (CERT 2270)"
+FRC,FRCB,First Republic Bank,bank,59017,"No holding company; the bank itself was listed (CERT 59017). Ticker was FRC; yfinance now carries its history under FRCB"
+SIVB,SIVBQ,SVB Financial Group,hc,1031449,"FDIC institutions API: Silicon Valley Bank (CERT 24735) lists RSSDHCR 1031449. Delisted after the March 2023 failure"
+CMA,CMA,Comerica Incorporated,hc,1199844,"FDIC financials API, REPDTE 2022-12-31: Comerica Bank (CERT 983) and Comerica B&T NA (CERT 1596) list RSSDHCR 1199844. Ticker gone after its 2026 merger"

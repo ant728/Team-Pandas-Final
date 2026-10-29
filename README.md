@@ -2,9 +2,65 @@
 
 **Team:** [Name 1], [Name 2], [Name 3], [Name 4]
 
-**Status:** Checkpoint 0, candidate ideas (Thu Oct 15, 2026)
+**Status:** Checkpoint 1, pick + proof of concept. **We picked Idea B: bank fragility, SVB and who's next (Seed 6).** See [`STATUS.md`](STATUS.md).
 
-We're considering three ideas, all from `00_PROJECT_SEEDS`:
+## Our project: bank fragility (Seed 6)
+
+**Question:** When Silicon Valley Bank failed in March 2023, did banks that relied more on uninsured deposits and had larger hidden losses on their bonds fall more, and which listed banks look like that today?
+
+**One row of the final dataset = one listed bank entity** (the holding company, or the bank itself if it has none). It has the Q4 2022 call report measures and the stock's abnormal return around Mar 9–13, 2023. Key: `ticker` (unique, asserted).
+
+### How to run
+```bash
+pip install -r requirements.txt
+python run_all.py
+```
+`run_all.py` downloads the raw data, builds the dataset, and runs the hand checks. It stops if any check fails. Current outputs:
+- [`outputs/poc_final_rows.csv`](outputs/poc_final_rows.csv): real rows for 6 banks (proof of concept)
+- [`outputs/hand_checks.md`](outputs/hand_checks.md): independent recomputations, all passing
+
+### Pipeline
+| Step | Script | Reads | Writes |
+|---|---|---|---|
+| 1 | `code/01_download_fdic.py` | `inputs/bank_crosswalk.csv`, FDIC API | `data/raw/fdic_financials_20221231.csv` (one row per bank) |
+| 2 | `code/02_download_prices.py` | `inputs/bank_crosswalk.csv`, yfinance | `data/raw/prices.csv` (one row per symbol × day), `data/raw/prices_missing.csv` |
+| 3 | `code/03_build_dataset.py` | raw files | `data/processed/bank_measures.csv`, `data/processed/event_returns.csv`, `outputs/poc_final_rows.csv` |
+| 4 | `code/04_hand_checks.py` | raw files, outputs | `outputs/hand_checks.md` |
+
+Settings (event date, windows, call report quarter, field list) live in one place: `code/config.py`.
+
+### Data provenance
+| Input | Source | How we get it again | Pulled |
+|---|---|---|---|
+| Call report fields, Q4 2022 | FDIC BankFind API, `https://api.fdic.gov/banks/financials` ([field definitions](https://api.fdic.gov/banks/docs/risview_properties.yaml)) | `code/01_download_fdic.py` | See `data/provenance_log.csv` (logs the API's data vintage too) |
+| Daily prices | yfinance (adjusted closes) | `code/02_download_prices.py` | See `data/provenance_log.csv` |
+| Ticker ↔ bank link | **Hand-made** from the FDIC institutions API; each row cites how it was matched | `inputs/bank_crosswalk.csv` | Oct 29, 2026 |
+
+`data/raw/` is git-ignored; the scripts recreate it.
+
+### Variables
+| Column | Definition (FDIC field codes, $ thousands, summed across the entity's banks) |
+|---|---|
+| `uninsured_dep_share` | `DEPUNINS / DEPDOM`: estimated uninsured domestic deposits / domestic deposits |
+| `htm_loss_to_equity` | `(SCHA − SCHF) / EQTOT`: held-to-maturity loss not yet in book equity |
+| `sec_loss_to_equity` | `((SCHA − SCHF) + (SCAA − SCAF)) / EQTOT`: all securities losses |
+| `htm_share_of_securities` | `SCHA / (SCHA + SCAF)` |
+| `car_0_2` | Sum of market-model abnormal returns (SPY; estimation window trading days −250 to −30) over Mar 9, 10, 13, 2023 |
+| `car_0_2_mktadj` | Same, with stock return − SPY return |
+
+### Threats to validity (so far)
+1. **Survivorship:** failed and later-merged banks (SVB, Comerica so far) have no prices in yfinance, so the hardest-hit banks drop out. Every missing bank is logged in `car_note`, not dropped silently.
+2. **Look-ahead in the data vintage:** the FDIC API serves the current version of Q4 2022 data, which may include amendments filed after March 2023.
+3. **Loss measure:** losses on securities moved from AFS to HTM sit in equity (AOCI), not in the HTM gap (Zions shows a negative HTM loss). Securities-only measures also ignore losses on loans.
+4. **Large-move arithmetic:** summed CARs overstate crashes this big (WAL −76% summed vs −64% buy-and-hold). See `specs_tried.md`.
+5. **Hand-made ticker link:** fine for 6 banks; not for 300. We need a tested link.
+6. **Small, illiquid banks** will have noisy returns once we scale up.
+
+---
+
+## Checkpoint 0: the three candidates
+
+We considered three ideas, all from `00_PROJECT_SEEDS`:
 
 | # | Idea | Seed | Main tools from class |
 |---|---|---|---|
@@ -204,23 +260,21 @@ Main chart: cumulative abnormal return by group from 60 trading days before to 2
 ---
 
 ## Proof of concept (Lecture 16, Question 4)
-_For our favorite idea: one real row of the final dataset, from the actual source. What did we get, how long would the full dataset take, and what broke?_
+Done for Idea B: see the top of this README and [`STATUS.md`](STATUS.md). Short version: the FDIC API gives us every call report field we need, rolled up to the holding company as of Dec 31, 2022. yfinance gives returns for survivors only.
 
-[team to fill in]
-
-## Repo structure (planned)
+## Repo structure
 ```
 README.md
-STATUS.md            # Checkpoint 1 memo (due Fri Oct 23)
+STATUS.md            # Checkpoint 1 memo
 specs_tried.md       # every specification we run
 run_all.py           # rebuilds everything from raw inputs
-code/                # 01_download, 02_clean, 03_build_dataset, 04_analysis
+requirements.txt
+code/                # config.py, 01_download_fdic, 02_download_prices, 03_build_dataset, 04_hand_checks
+inputs/              # hand-made inputs (bank_crosswalk.csv)
 data/raw/            # git-ignored; recreated by the download code
 data/processed/
+data/provenance_log.csv
 outputs/             # every table/figure in the slides and dashboard
-audits/              # self-audits (01_self_audit.md, …)
-app/                 # dashboard
+audits/              # self-audits (Checkpoint 2)
+app/                 # dashboard (Checkpoint 2)
 ```
-
-## Threats to validity
-_Will be filled in once we pick an idea. The "first thing an auditor would attack" for each idea above is our starting list._
