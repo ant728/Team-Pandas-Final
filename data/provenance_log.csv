@@ -1,0 +1,3 @@
+file,source,pulled_utc,source_vintage,note
+data/raw/fdic_financials_20221231.csv,https://api.fdic.gov/banks/financials,2026-10-29T15:00:13Z,risview_20260819185831,REPDTE=20221231; filters by RSSDHCR (holding co.) or CERT (bank)
+data/raw/prices.csv,yfinance Ticker.history(auto_adjust=True),2026-10-29T15:00:19Z,yfinance 1.7.0,2022-01-01 to 2023-04-01
