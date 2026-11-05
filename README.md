@@ -1,6 +1,6 @@
-# FIN 331 Final Project: [Team Name]
+# FIN 331 Final Project: Team Pandas
 
-**Team:** [Name 1], [Name 2], [Name 3], [Name 4]
+**Team:** Andrew Temo (ant728), Mason Friedman (MasonF9897897), Morgan Waddell (mow228-boop), Ryan Carr (rcarr37)
 
 **Status:** Checkpoint 1, pick + proof of concept. **We picked Idea B: bank fragility, SVB and who's next (Seed 6).** See [`STATUS.md`](STATUS.md).
 
