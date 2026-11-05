@@ -9,6 +9,12 @@ OUTPUTS = ROOT / "outputs"
 PROVENANCE_LOG = ROOT / "data" / "provenance_log.csv"
 
 CROSSWALK = INPUTS / "bank_crosswalk.csv"
+REQUESTS = ROOT / "requests"
+
+# NY Fed CRSP-FRB link: maps each listed bank entity (RSSD ID) to its CRSP PERMCO, with start/end dates.
+# Page: https://www.newyorkfed.org/research/banking_research/crsp-frb  (this is the Sep 30, 2024 vintage)
+NYFED_LINK_URL = ("https://www.newyorkfed.org/medialibrary/media/research/banking_research/data/"
+                  "crsp_20240930v2.csv")
 
 # Call report quarter: the last one public BEFORE the event.
 # Q4 2022 call reports were due Jan 30, 2023, well before SVB's Mar 8, 2023 announcement.

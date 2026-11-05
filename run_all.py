@@ -5,6 +5,7 @@ from pathlib import Path
 
 CODE = Path(__file__).resolve().parent / "code"
 STEPS = [
+    "00_build_universe.py",
     "01_download_fdic.py",
     "02_download_prices.py",
     "03_build_dataset.py",

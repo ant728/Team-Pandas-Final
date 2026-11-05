@@ -35,8 +35,10 @@ Settings (event date, windows, call report quarter, field list) live in one plac
 | Call report fields, Q4 2022 | FDIC BankFind API, `https://api.fdic.gov/banks/financials` ([field definitions](https://api.fdic.gov/banks/docs/risview_properties.yaml)) | `code/01_download_fdic.py` | See `data/provenance_log.csv` (logs the API's data vintage too) |
 | Daily prices | yfinance (adjusted closes) | `code/02_download_prices.py` | See `data/provenance_log.csv` |
 | Ticker ↔ bank link | **Hand-made** from the FDIC institutions API; each row cites how it was matched | `inputs/bank_crosswalk.csv` | Oct 29, 2026 |
+| Bank ↔ CRSP link (sample universe) | NY Fed CRSP–FRB link, Sep 30, 2024 vintage ([page](https://www.newyorkfed.org/research/banking_research/crsp-frb)) | `code/00_build_universe.py` | See `data/provenance_log.csv` |
+| CRSP daily returns | Pulled by Prof. Bowen on request, Nov 2026: the 343 PERMCOs in `requests/crsp_permcos.csv`, Jan 2022–Dec 2023; variables RET, RETX, DLRET/DLSTCD (delisting), PRC, SHROUT, VOL, TICKER, COMNAM, SHRCD, EXCHCD, and VWRETD (market) | Can't be re-downloaded without CRSP access; request the same PERMCOs, dates, and variables | Pending |
 
-`data/raw/` is git-ignored; the scripts recreate it.
+`data/raw/` is git-ignored. The scripts recreate it, except the CRSP file, which is licensed and comes from Prof. Bowen.
 
 ### Variables
 | Column | Definition (FDIC field codes, $ thousands, summed across the entity's banks) |
