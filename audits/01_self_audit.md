@@ -26,7 +26,7 @@ Review date: November 10, 2026. Scope: the working 20-bank v0, proposal, dashboa
 
 - Downloaded the NY Fed link and FDIC report-date financials. CRSP was read from the user-supplied licensed delivery.
 - Pipeline produces 20 entity rows from 30 subsidiary reports; 18 observed event outcomes, with SIVB/SBNY explicitly missing.
-- Eight independent checks in `outputs/hand_checks.md`: published SVB magnitudes, JPM aggregation, WAL compounding/benchmark arithmetic, two disclosed failure-scenario calculations, and Comerica coverage.
+- Eight independent checks in `outputs/checkpoint2_hand_checks.md`: published SVB magnitudes, JPM aggregation, WAL compounding/benchmark arithmetic, two disclosed failure-scenario calculations, and Comerica coverage.
 - Zions source-date, AOCI-component and rounded cost/fair-value assertions pass; unique keys, merge cardinality, CRSP share-class and report coverage checks execute in code.
 - Browser checked overview, event chart/return selector and historical search/sort. Searched ZION and verified one matching row. Proposal mockup is a screenshot of the running dashboard.
 - Preview serves only copied public files, never the repository root. Raw CRSP and local environment are excluded from the deliverable archive and Git staging.
@@ -34,3 +34,10 @@ Review date: November 10, 2026. Scope: the working 20-bank v0, proposal, dashboa
 ## Limits and submission status
 
 This is a reviewable Checkpoint 2 v0, not completed full-sample research. Exact transfer-loss balances, original FFIEC comparisons, historical screen performance and a live-quarter screen remain outside the verified results. Team review is still necessary, including source transcription, crosswalk matches, understanding the code, and checking the class HW8 submission instructions (not supplied here).
+
+
+## Reconciliation with concurrent team changes
+
+Before final handoff, main gained PR #7 with a full-sample CRSP pipeline. The original Checkpoint 2 branch conflicted with its reorganized scripts and outputs. The merge preserves the canonical `run_all.py`, full-sample scripts, processed data, regressions and hand checks. The independently verified 20-bank sample now runs via `run_checkpoint2.py`, scripts under `code/checkpoint2/`, and isolated processed/raw subfolders. Its public artifacts are `outputs/checkpoint2_dataset.csv` and `outputs/checkpoint2_hand_checks.md`.
+
+The two analyses deliberately keep different failed-bank policies visible: the team's canonical baseline uses zero recovery; the independent sample leaves unknown returns missing and reports a separate zero-recovery scenario. Neither specification history is erased. The dashboard reads the 20-bank outputs, not the canonical full-sample results. The full-sample pipeline was preserved, not independently rerun in this task. The isolated pipeline was rerun after reconciliation.

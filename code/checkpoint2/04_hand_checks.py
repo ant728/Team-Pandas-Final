@@ -4,7 +4,7 @@ import math
 import pandas as pd
 from config import CALL_REPORT_DATE, CRSP_DIR, OUTPUTS, RAW, CROSSWALK
 
-final = pd.read_csv(OUTPUTS / 'poc_final_rows.csv').set_index('ticker')
+final = pd.read_csv(OUTPUTS / 'checkpoint2_dataset.csv').set_index('ticker')
 checks = []
 def check(name, actual, expected, tol, source):
     ok = math.isfinite(actual) and abs(actual-expected) <= tol
@@ -44,6 +44,6 @@ lines = ['# Hand checks','', 'Generated from local raw inputs by `04_hand_checks
 '| Check | Pipeline | Independent | Tolerance | Result | Evidence |','|---|---:|---:|---:|---|---|']
 for name,a,b,tol,res,src in checks:
     lines.append(f'| {name} | {a:.4f} | {b:.4f} | {tol:g} | {res} | {src} |')
-(OUTPUTS/'hand_checks.md').write_text('\n'.join(lines)+'\n',encoding='utf-8')
+(OUTPUTS/'checkpoint2_hand_checks.md').write_text('\n'.join(lines)+'\n',encoding='utf-8')
 print('\n'.join(lines))
 assert all(r[4]=='PASS' for r in checks), 'Independent check failed'

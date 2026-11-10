@@ -8,7 +8,7 @@ root = Path(__file__).resolve().parents[1]
 dest = root / 'work' / 'preview'
 files = ['app/index.html', 'PROPOSAL.md', 'audits/01_self_audit.md',
          'docs/zions_measurement.md', 'docs/images/dashboard_mockup.png',
-         'outputs/dashboard_data.json', 'outputs/poc_final_rows.csv',
+         'outputs/dashboard_data.json', 'outputs/checkpoint2_dataset.csv',
          'outputs/zions_reconciliation.csv']
 for name in files:
     source = root / name

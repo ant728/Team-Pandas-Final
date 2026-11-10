@@ -19,7 +19,7 @@ Sources: [Zions 2022 10-K, filed February 23, 2023](https://www.sec.gov/Archives
 
 ## Reproduction and limits
 
-`inputs/zions_disclosures.csv` records manually transcribed public figures, units, public date, and exact locations. `05_checkpoint_outputs.py` checks component arithmetic and rounded cost/fair-value agreement with FDIC, then writes `outputs/zions_reconciliation.csv` and `outputs/zions_measure_comparison.csv`. These are sourced inputs, never invented observations. Verify the transcription against the linked report when reviewing the PR.
+`inputs/zions_disclosures.csv` records manually transcribed public figures, units, public date, and exact locations. `code/checkpoint2/05_checkpoint_outputs.py` checks component arithmetic and rounded cost/fair-value agreement with FDIC, then writes `outputs/zions_reconciliation.csv` and `outputs/zions_measure_comparison.csv`. These are sourced inputs, never invented observations. Verify the transcription against the linked report when reviewing the PR.
 
 **Correction to the handoff:** FDIC labels `EQCCOMPI` as OTHER COMPREHENSIVE INCOME, not accumulated AOCI. Its Zions value is -$3,032.035 million, matching the annual OCI flow (rounded -$3,032 million), rather than the closing -$3,112 million balance. Do not use that field as accumulated losses. See the [FDIC dictionary](https://api.fdic.gov/banks/docs/risview_properties.yaml).
 

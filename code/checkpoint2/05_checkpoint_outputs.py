@@ -9,7 +9,7 @@ from config import INPUTS, OUTPUTS
 
 
 def main():
-    final = pd.read_csv(OUTPUTS / 'poc_final_rows.csv')
+    final = pd.read_csv(OUTPUTS / 'checkpoint2_dataset.csv')
     assert final.ticker.is_unique
     assert final.uninsured_dep_share.dropna().between(0, 1).all()
     disclosures = pd.read_csv(INPUTS / 'zions_disclosures.csv')

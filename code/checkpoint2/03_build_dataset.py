@@ -7,7 +7,7 @@
 Outputs:
   data/processed/bank_measures.csv     one row per entity
   data/processed/event_returns.csv     one row per entity x event day (the ARs behind each CAR)
-  outputs/poc_final_rows.csv           the final rows
+  outputs/checkpoint2_dataset.csv           the final rows
 """
 import numpy as np
 import pandas as pd
@@ -119,7 +119,7 @@ def main():
     measures.to_csv(PROCESSED / "bank_measures.csv", index=False)
     # Daily CRSP returns are licensed: never write them to tracked processed/output files.
     ars.to_csv(RAW / "event_returns_crsp.csv", index=False)
-    final[cols].to_csv(OUTPUTS / "poc_final_rows.csv", index=False, float_format="%.4f")
+    final[cols].to_csv(OUTPUTS / "checkpoint2_dataset.csv", index=False, float_format="%.4f")
 
     with pd.option_context("display.width", 200, "display.max_columns", None):
         print(final[["ticker", "total_assets_bn", "uninsured_dep_share", "htm_loss_to_equity",

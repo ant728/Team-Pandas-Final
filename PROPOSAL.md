@@ -11,6 +11,8 @@ The project combines the course's event-study, data-linking, aggregation, regres
 
 ## A working small-sample v0
 
+The team has also merged a canonical full-sample pipeline on main. This proposal documents the independently verified 20-bank Checkpoint 2 run, isolated under `code/checkpoint2/` and `data/processed/checkpoint2/`; it does not replace the full-sample scripts or their outputs.
+
 One observation is one listed bank entity: a holding company or a standalone listed bank. The unique key for this development sample is `ticker`, with regulator identifier and CRSP PERMCO retained in the crosswalk. The current v0 covers 20 deliberately selected entities, including SVB, Signature, First Republic, PacWest, and Comerica. Thirty subsidiary-bank reports aggregate to those entities. It is not a random or representative sample.
 
 Financial measures use December 31, 2022 reports. Prices/returns span January 2022–December 2023 in the supplied CRSP delivery. The event outcome covers March 9, 10, and 13, 2023. Eighteen banks have complete observed event outcomes; the other two retain explicit missing-outcome notes and separate zero-recovery scenarios. The broader NY Fed-linked universe contains 343 entities, including nonbank financial groups; eligibility and coverage must be reviewed before a full-sample expansion.
@@ -28,7 +30,7 @@ Required identifiers and variables are entity name, ticker, entity type and ID, 
 | CMA | 85.61 | 62.48% | 62.15% | -32.95% |
 | SBNY | 110.36 | 89.67% | 40.13% | Missing |
 
-The table is generated from `outputs/poc_final_rows.csv`; the complete file also contains HTM and AFS components, market-model CAR, estimation observations and return-source labels. Ratios above 100% of equity are possible. Missing outcomes are not zero.
+The table is generated from `outputs/checkpoint2_dataset.csv`; the complete file also contains HTM and AFS components, market-model CAR, estimation observations and return-source labels. Ratios above 100% of equity are possible. Missing outcomes are not zero.
 
 ## Inputs, sources and storage
 
@@ -53,14 +55,14 @@ Raw CRSP data cannot be downloaded from the public repository. Authorized users 
 
 ### Reproducible pipeline
 
-1. `code/00_build_universe.py`: historical link universe and requested PERMCO list.
-2. `code/01_download_fdic.py`: report-date subsidiary financials for the selected v0.
-3. `code/crsp_returns.py`, called by `03_build_dataset.py`: validate CRSP keys/share-class uniqueness; construct returns and merge one-to-one with entity measures.
-4. `code/04_hand_checks.py`: independent aggregation, public-figure and return-arithmetic checks.
-5. `code/05_checkpoint_outputs.py`: sourced Zions diagnostic, descriptive regression and dashboard JSON.
+1. `code/checkpoint2/00_build_universe.py`: historical link universe and requested PERMCO list.
+2. `code/checkpoint2/01_download_fdic.py`: report-date subsidiary financials for the selected v0.
+3. `code/checkpoint2/crsp_returns.py`, called by `03_build_dataset.py`: validate CRSP keys/share-class uniqueness; construct returns and merge one-to-one with entity measures.
+4. `code/checkpoint2/04_hand_checks.py`: independent aggregation, public-figure and return-arithmetic checks.
+5. `code/checkpoint2/05_checkpoint_outputs.py`: sourced Zions diagnostic, descriptive regression and dashboard JSON.
 6. `app/index.html`: render only generated public outputs. The app contains no raw-data credentials or CRSP daily rows.
 
-Run `python run_all.py` after installing requirements and placing licensed inputs locally. The old yfinance downloader is retained as development history; Checkpoint 2 uses CRSP and does not require it to produce returns.
+Run `python run_checkpoint2.py` after installing requirements and placing licensed inputs locally. The old yfinance downloader is retained as development history; Checkpoint 2 uses CRSP and does not require it to produce returns.
 
 ## Threats and checks
 
