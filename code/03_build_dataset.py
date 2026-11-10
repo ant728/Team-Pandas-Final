@@ -13,9 +13,9 @@ import numpy as np
 import pandas as pd
 
 from config import (CALL_REPORT_DATE, CROSSWALK, ESTIMATION_WINDOW, EVENT_DAY0, EVENT_WINDOW,
-                    MARKET, OUTPUTS, PROCESSED, RAW)
+                    MARKET, OUTPUTS, PROCESSED, RAW, CRSP_DIR)
 
-SUM_FIELDS = ["ASSET", "DEP", "DEPDOM", "DEPUNINS", "EQTOT", "SC", "SCHA", "SCHF", "SCAA", "SCAF"]
+SUM_FIELDS = ["ASSET", "DEP", "DEPDOM", "DEPUNINS", "EQTOT", "EQCCOMPI", "SC", "SCHA", "SCHF", "SCAA", "SCAF"]
 MIN_EST_OBS = 150
 
 
@@ -31,6 +31,8 @@ def bank_measures():
 
     m["total_assets_bn"] = m["ASSET"] / 1e6
     m["uninsured_dep_share"] = m["DEPUNINS"] / m["DEPDOM"]
+    m.loc[m['n_banks_missing_uninsured'] > 0, 'uninsured_dep_share'] = np.nan
+    assert m['EQTOT'].gt(0).all(), 'Nonpositive equity requires a separately defined treatment'
     m["htm_unrealized_loss_bn"] = (m["SCHA"] - m["SCHF"]) / 1e6
     m["afs_unrealized_loss_bn"] = (m["SCAA"] - m["SCAF"]) / 1e6
     # HTM losses are NOT in book equity (HTM is carried at amortized cost), so this is the "hidden" hit.
@@ -74,6 +76,9 @@ def event_study(xw):
         ar = evt[row.yf_symbol] - (alpha + beta * evt[MARKET])
         ar_mkt = evt[row.yf_symbol] - evt[MARKET]
         rec.update(alpha=alpha, beta=beta, est_obs=len(est),
+                   buy_hold_return=float((1 + evt[row.yf_symbol]).prod() - 1),
+                   market_buy_hold_return=float((1 + evt[MARKET]).prod() - 1),
+                   bhar_mktadj=float((1 + evt[row.yf_symbol]).prod() - (1 + evt[MARKET]).prod()),
                    car_0_2=ar.sum(), car_0_2_mktadj=ar_mkt.sum())
         cars.append(rec)
         for d, rel in zip(evt_days, range(EVENT_WINDOW[0], EVENT_WINDOW[1] + 1)):
@@ -89,7 +94,11 @@ def main():
     assert xw["ticker"].is_unique and xw["entity_id"].is_unique
 
     measures = bank_measures()
-    cars, ars = event_study(xw)
+    if (CRSP_DIR / 'crsp_daily_2022_2023.csv').exists():
+        from crsp_returns import event_study_crsp
+        cars, ars = event_study_crsp(xw)
+    else:
+        raise FileNotFoundError('Checkpoint 2 requires the licensed CRSP delivery in data/raw/crsp_delivery/ant728_request/. See README.')
 
     final = (xw[["ticker", "entity_name", "entity_type", "entity_id"]]
              .merge(measures, on="ticker", how="left", validate="1:1")
@@ -101,12 +110,15 @@ def main():
             "n_banks_missing_uninsured", "total_assets_bn", "uninsured_dep_share",
             "htm_unrealized_loss_bn", "afs_unrealized_loss_bn", "htm_loss_to_equity",
             "sec_loss_to_equity", "htm_share_of_securities", "beta", "est_obs",
+            "buy_hold_return", "market_buy_hold_return", "bhar_mktadj",
+            "bhar_failure_zero_recovery_scenario", "return_source",
             "car_0_2", "car_0_2_mktadj", "car_note"]
 
     PROCESSED.mkdir(parents=True, exist_ok=True)
     OUTPUTS.mkdir(parents=True, exist_ok=True)
     measures.to_csv(PROCESSED / "bank_measures.csv", index=False)
-    ars.to_csv(PROCESSED / "event_returns.csv", index=False)
+    # Daily CRSP returns are licensed: never write them to tracked processed/output files.
+    ars.to_csv(RAW / "event_returns_crsp.csv", index=False)
     final[cols].to_csv(OUTPUTS / "poc_final_rows.csv", index=False, float_format="%.4f")
 
     with pd.option_context("display.width", 200, "display.max_columns", None):

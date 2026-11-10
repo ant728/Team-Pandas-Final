@@ -2,3 +2,13 @@ file,source,pulled_utc,source_vintage,note
 data/raw/fdic_financials_20221231.csv,https://api.fdic.gov/banks/financials,2026-10-29T15:00:13Z,risview_20260819185831,REPDTE=20221231; filters by RSSDHCR (holding co.) or CERT (bank)
 data/raw/prices.csv,yfinance Ticker.history(auto_adjust=True),2026-10-29T15:00:19Z,yfinance 1.7.0,2022-01-01 to 2023-04-01
 data/raw/nyfed_crsp_frb_link.csv,https://www.newyorkfed.org/medialibrary/media/research/banking_research/data/crsp_20240930v2.csv,2026-11-05T02:38:48Z,crsp_20240930v2,RSSD -> PERMCO link with date ranges
+data/raw/nyfed_crsp_frb_link.csv,https://www.newyorkfed.org/medialibrary/media/research/banking_research/data/crsp_20240930v2.csv,2026-11-10T22:27:27Z,crsp_20240930v2,RSSD -> PERMCO link with date ranges
+data/raw/fdic_financials_20221231.csv,https://api.fdic.gov/banks/financials,2026-11-10T22:27:31Z,risview_20260819185831,REPDTE=20221231; filters by RSSDHCR (holding co.) or CERT (bank)
+data/raw/prices.csv,yfinance Ticker.history(auto_adjust=True),2026-11-10T22:27:43Z,yfinance 1.8.0,2022-01-01 to 2023-04-01
+data/raw/fdic_financials_20221231.csv,https://api.fdic.gov/banks/financials,2026-11-10T22:28:46Z,risview_20260819185831,REPDTE=20221231; filters by RSSDHCR (holding co.) or CERT (bank)
+data/raw/nyfed_crsp_frb_link.csv,https://www.newyorkfed.org/medialibrary/media/research/banking_research/data/crsp_20240930v2.csv,2026-11-10T22:31:12Z,crsp_20240930v2,RSSD -> PERMCO link with date ranges
+data/raw/fdic_financials_20221231.csv,https://api.fdic.gov/banks/financials,2026-11-10T22:31:23Z,risview_20260819185831,REPDTE=20221231; filters by RSSDHCR (holding co.) or CERT (bank)
+data/raw/crsp_delivery/ant728_request/crsp_daily_2022_2023.csv,"User-supplied CRSP/WRDS delivery, pulled 2026-11-06 by provider",2026-11-10T22:31:25Z,legacy CRSP dsf/dsenames/dsedelist/dsi,Local licensed input; never publish daily rows
+data/raw/nyfed_crsp_frb_link.csv,https://www.newyorkfed.org/medialibrary/media/research/banking_research/data/crsp_20240930v2.csv,2026-11-10T22:37:47Z,crsp_20240930v2,RSSD -> PERMCO link with date ranges
+data/raw/fdic_financials_20221231.csv,https://api.fdic.gov/banks/financials,2026-11-10T22:37:59Z,risview_20260819185831,REPDTE=20221231; filters by RSSDHCR (holding co.) or CERT (bank)
+data/raw/crsp_delivery/ant728_request/crsp_daily_2022_2023.csv,"User-supplied CRSP/WRDS delivery, pulled 2026-11-06 by provider",2026-11-10T22:38:00Z,legacy CRSP dsf/dsenames/dsedelist/dsi,Local licensed input; never publish daily rows

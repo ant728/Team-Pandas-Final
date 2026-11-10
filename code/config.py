@@ -8,7 +8,8 @@ PROCESSED = ROOT / "data" / "processed"
 OUTPUTS = ROOT / "outputs"
 PROVENANCE_LOG = ROOT / "data" / "provenance_log.csv"
 
-CROSSWALK = INPUTS / "bank_crosswalk.csv"
+CROSSWALK = INPUTS / "checkpoint2_crosswalk.csv"
+CRSP_DIR = RAW / "crsp_delivery" / "ant728_request"
 REQUESTS = ROOT / "requests"
 
 # NY Fed CRSP-FRB link: maps each listed bank entity (RSSD ID) to its CRSP PERMCO, with start/end dates.
@@ -29,6 +30,7 @@ FDIC_FIELDS = [
     "DEPDOM",    # deposits in domestic offices
     "DEPUNINS",  # estimated uninsured deposits, domestic offices (RC-O; banks > $1B only)
     "EQTOT",     # total equity capital
+    "EQCCOMPI",  # OTHER COMPREHENSIVE INCOME: flow, not accumulated AOCI balance
     "SC",        # total securities (= SCHA + SCAF)
     "SCHA",      # held-to-maturity securities, amortized cost (book value)
     "SCHF",      # held-to-maturity securities, fair value

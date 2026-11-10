@@ -1,0 +1,16 @@
+{
+  "n": 18,
+  "status": "descriptive OLS only",
+  "outcome": "bhar_mktadj",
+  "predictors": [
+    "uninsured_dep_share",
+    "sec_loss_to_equity"
+  ],
+  "inference": "No p-values: selected proof-of-concept sample, missing failed banks.",
+  "residual_df": 15,
+  "coefficients": {
+    "intercept": 0.09650111219727338,
+    "uninsured_dep_share": -0.5158033023566476,
+    "sec_loss_to_equity": -0.23704447555977462
+  }
+}

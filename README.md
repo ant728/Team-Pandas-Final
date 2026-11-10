@@ -1,3 +1,40 @@
+# Checkpoint 2: bank fragility v0
+
+**Due Saturday, November 14, 2026.** This section supersedes the Checkpoint 1 status and yfinance-based instructions below; older material is retained as project history.
+
+- [Proposal / HW8](PROPOSAL.md), with real rows and the [dashboard mockup](docs/images/dashboard_mockup.png).
+- [Self-audit and responses](audits/01_self_audit.md).
+- [Morgan's sourced Zions explanation](docs/zions_measurement.md).
+- [Generated sample](outputs/poc_final_rows.csv), [hand checks](outputs/hand_checks.md), [regression diagnostic](outputs/regression_diagnostic.json).
+- Local dashboard: `app/index.html`. Run the safe preview below; an HTML file opened directly cannot fetch its data reliably. No deployed dashboard URL is claimed yet.
+
+## Setup and run
+
+Python 3.12 was used for verification. Create an environment and install `requirements-lock.txt` for the verified versions, or `requirements.txt` for the project's broad requirements.
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r requirements-lock.txt
+.\.venv\Scripts\python.exe run_all.py
+.\.venv\Scripts\python.exe code/preview_dashboard.py
+```
+
+Open `http://127.0.0.1:8766/app/index.html`. The preview copies only explicitly allowed public assets to ignored `work/preview/`; do not serve the repository root because it contains licensed data.
+
+Before running, authorized Lehigh users must place `crsp_daily_2022_2023.csv`, `crsp_market_vwretd.csv`, and `crsp_delistings.csv` from the professor's delivery in `data/raw/crsp_delivery/ant728_request/`. Keep all delivery contents private. The public repository cannot reproduce licensed inputs without this access. The pipeline downloads public FDIC/NY Fed data, then uses the local CRSP delivery; it does not download CRSP or depend on Yahoo prices. It fails if the licensed delivery is absent.
+
+## Current result and threats to validity
+
+The selected working sample has 20 entities and 18 complete observed event returns. The headline is stock buy-and-hold minus CRSP market buy-and-hold over March 9/10/13. Unknown SVB/Signature delisting returns stay missing; zero-recovery outcomes are separate assumptions. Baseline complete-case OLS remains vulnerable to failed-bank missingness and selection. Treat it as descriptive.
+
+Financial measures aggregate insured subsidiary banks and can differ from consolidated holding-company accounts. The historical API vintage can contain amendments. The original FFIEC comparison remains uncompleted. Cross-bank transferred-loss balances and an exact Zions unamortized balance remain outstanding; the approximately 79.9% Zions diagnostic is not used as a comparable full-sample measure. FDIC `EQCCOMPI` is an OCI flow, not accumulated AOCI. The historical screen is not live or validated. Details and all evaluated variants are in `specs_tried.md` and the self-audit.
+
+Daily CRSP returns/prices/shares never enter public outputs. The legacy daily Yahoo file is explicitly labeled `data/processed/event_returns_yfinance_legacy.csv`; it is not the source for Checkpoint 2. All displayed event outcomes come from generated files in `outputs/`.
+
+---
+
+## Archived Checkpoint 1 context
+
 # FIN 331 Final Project: Team Pandas
 
 **Team:** Andrew Temo (ant728), Mason Friedman (MasonF9897897), Morgan Waddell (mow228-boop), Ryan Carr (rcarr37)
