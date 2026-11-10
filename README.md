@@ -61,7 +61,7 @@ For four banks, all 24 comparisons of total assets, uninsured deposits, and the 
 | Western Alliance (WAL) | ASSET, DEPUNINS, SCHA, SCHF, SCAA, SCAF | 6 / 6 |
 | Zions (ZION) | ASSET, DEPUNINS, SCHA, SCHF, SCAA, SCAF | 6 / 6 |
 
-The detailed bank-by-bank values are in [`outputs/ffiec_fdic_comparison.md`](outputs/ffiec_fdic_comparison.md). `code/06_hand_checks.py` reruns this comparison when the local FFIEC ZIP is present; otherwise it records the comparison as **SKIPPED**.
+The detailed bank-by-bank values are in [`outputs/ffiec_fdic_comparison.md`](outputs/ffiec_fdic_comparison.md). `code/06_hand_checks.py` reruns this comparison when the local FFIEC ZIP is present. Without the ZIP, the check is recorded as **SKIPPED** and the committed comparison in `outputs/ffiec_fdic_comparison.md` is left unchanged.
 
 ### Variables
 | Column | Definition |

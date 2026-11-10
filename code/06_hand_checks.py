@@ -74,7 +74,6 @@ if FFIEC_ZIP.exists():
 else:
     results.append(("FDIC API vs. FFIEC CDR Q4 2022 comparison", None, None, None,
                     "SKIPPED", f"Local input not present: {FFIEC_ZIP.relative_to(RAW.parent.parent)}"))
-    write_ffiec_report(pd.DataFrame())
 
 # --- Write report ------------------------------------------------------------------------------
 lines = ["# Hand checks", "",
