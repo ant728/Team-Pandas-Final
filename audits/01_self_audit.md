@@ -1,43 +1,40 @@
-# Self-audit 01: Checkpoint 2
+# Checkpoint 2 self-audit — dashboard contribution
 
-Review date: November 10, 2026. Scope: the working 20-bank v0, proposal, dashboard and public-data boundary. This is an agent-assisted skeptical review, not an independent professor audit. The course Quick Reference prompt itself was not supplied; the review applies the supplied project audit checklist.
+**Scope:** Mason Friedman's dashboard after integrating the full CRSP
+pipeline from [PR #7](https://github.com/ant728/Team-Pandas-Final/pull/7).
+This is a dashboard audit for Checkpoint 2 ([issue #4](https://github.com/ant728/Team-Pandas-Final/issues/4)).
 
-## Findings and responses
+| Check | Finding and response |
+|---|---|
+| Rebuild | Ran `python run_all.py` in an isolated checkout using the four supplied CRSP inputs. All seven stages completed and all nine hand checks passed. The regenerated final dataset matched the committed output to numeric precision. |
+| Data source | The app reads only `outputs/final_dataset.csv`. There are 343 unique RSSD IDs and 323 in-sample rows, all with both plotted values. The other 20 stay in the table: 16 have no FDIC match and four have no event returns. |
+| Return measure | The scatter uses `bhar_0_2`: compounded bank return minus compounded CRSP value-weighted market return over March 9, 10, and 13. Market-model CAR remains a separate output. |
+| Delisting sensitivity | SVB and Signature each show a buy-and-hold return of −100% and a BHAR of −96.16%. Their points and tooltips identify the assumed delisting returns using `dlret_imputed`. These are estimates under the pipeline's assumption in `specs_tried.md` #5, not observed CRSP delisting returns. |
+| Browser review | Opened Intro, Method, March 2023 Results, and Who's Next. Verified all 323 plot points, both imputed labels, bank inspection, ticker/name fallback, search, numeric sorting with missing values last, and the included/excluded filters. The axes cover the full plotted range. The color scale saturates at the 95th percentile; raw ratios still appear in the inspector and table. |
+| Licensed inputs | The local server serves only the dashboard assets and the published final dataset. The four raw inputs and row-level interim files were used in the isolated rebuild and were not served, staged, or committed. |
 
-| Finding | Response | State |
-|---|---|---|
-| Existing summed CAR was described like an actual compounded crash loss | Headline is compounded stock return minus compounded CRSP VWRETD. Retain CAR as a labeled alternative. | Fixed |
-| yfinance lost failed and later-merged banks | Use supplied CRSP delivery; retain all 20 entity rows. Comerica and PacWest have observed event outcomes. | Fixed for available CRSP data |
-| SVB and Signature have missing delisting returns and incomplete event calendars | Preserve missing baseline outcomes; separately export terminal zero-value scenarios. No zero-return filling or silently shortened windows. | Disclosed, unresolved recovery values |
-| EQCCOMPI was mislabeled as an accumulated AOCI balance in the handoff | Verify dictionary: OTHER COMPREHENSIVE INCOME. Zions raw field matches annual flow, not closing balance. Explain Schedule RC 26.b and use 10-K components. | Fixed interpretation |
-| HTM-only gap misses earlier transferred losses | Recommend transfer-aware definition; produce sourced approximate Zions diagnostic. Do not apply a special correction in full-sample comparisons. | Exact remaining balance and cross-bank collection outstanding |
-| Total AOCI gross-up would mix securities, hedges, pensions and taxes | Reject total-AOCI shortcut; do not use annual OCI tax benefits to gross up a stock balance. | Fixed design |
-| Raw licensed daily returns could leak via processed files, dashboard or preview | Read raw input only from ignored directory; export event-level derived outcomes. Daily CRSP file writes stay under data/raw. Preview uses public-file allowlist. | Fixed; verify archive/staged paths before sharing |
-| Original hand checks used SPY while the new analysis uses CRSP VWRETD | Replace benchmark-dependent checks with independent CRSP scalar arithmetic. Earlier interim run failed these old checks; corrected checks pass. | Fixed |
-| Missing subsidiary uninsured values could produce an understated aggregate share | Mark aggregate uninsured share missing if any contributing subsidiary value is missing. Require positive equity; report coverage. | Fixed |
-| Four-bank initial regression would have one residual degree of freedom | Expanded to 20 banks, 18 complete outcomes. Report descriptive coefficients only, without inference or predictive claims. | Small selected sample remains |
-| Selected sample is not representative and complete-case OLS omits two failed outcomes | Label clearly; no inference claims. Full universe also contains nonbank financial groups requiring eligibility review. | Disclosed |
-| API historical data can contain later amendments | Log vintage. Original FFIEC bulk-file comparison not completed; do not claim match. | Outstanding, permitted API use disclosed |
-| Historical bank subsidiaries are not consolidated holding companies | Preserve entity type/ownership/crosswalk; disclose scope difference. | Disclosed; further manual matching review needed |
-| Historical screen could be mistaken for a live validated model | Explicit December 2022 labels; no latest-quarter or accuracy claims. Record retrospective test design without claiming pristine preregistration. | Fixed labeling; test not run |
-| Dense chart labels overlapped | Label a few reference banks; retain tooltips and full data table. | Fixed in browser QA |
-
-## Verification performed
-
-- Downloaded the NY Fed link and FDIC report-date financials. CRSP was read from the user-supplied licensed delivery.
-- Pipeline produces 20 entity rows from 30 subsidiary reports; 18 observed event outcomes, with SIVB/SBNY explicitly missing.
-- Eight independent checks in `outputs/checkpoint2_hand_checks.md`: published SVB magnitudes, JPM aggregation, WAL compounding/benchmark arithmetic, two disclosed failure-scenario calculations, and Comerica coverage.
-- Zions source-date, AOCI-component and rounded cost/fair-value assertions pass; unique keys, merge cardinality, CRSP share-class and report coverage checks execute in code.
-- Browser checked overview, event chart/return selector and historical search/sort. Searched ZION and verified one matching row. Proposal mockup is a screenshot of the running dashboard.
-- Preview serves only copied public files, never the repository root. Raw CRSP and local environment are excluded from the deliverable archive and Git staging.
-
-## Limits and submission status
-
-This is a reviewable Checkpoint 2 v0, not completed full-sample research. Exact transfer-loss balances, original FFIEC comparisons, historical screen performance and a live-quarter screen remain outside the verified results. Team review is still necessary, including source transcription, crosswalk matches, understanding the code, and checking the class HW8 submission instructions (not supplied here).
+**Limits:** Who's Next uses December 2022 balance sheets. It does not rank
+current banks or report a validated failure prediction. The event scatter
+shows associations; it does not establish causality. The loss measure,
+data-vintage concerns, and sensitivity to assumed delisting returns remain
+documented under “Threats to validity” in the main README.
 
 
-## Reconciliation with concurrent team changes
+## Morgan Waddell — accounting and proposal additions
 
-Before final handoff, main gained PR #7 with a full-sample CRSP pipeline. The original Checkpoint 2 branch conflicted with its reorganized scripts and outputs. The merge preserves the canonical `run_all.py`, full-sample scripts, processed data, regressions and hand checks. The independently verified 20-bank sample now runs via `run_checkpoint2.py`, scripts under `code/checkpoint2/`, and isolated processed/raw subfolders. Its public artifacts are `outputs/checkpoint2_dataset.csv` and `outputs/checkpoint2_hand_checks.md`.
+Review date: November 10, 2026. These checks supplement Mason's audit above; they are not a replacement for the full team Skeptical review scheduled Friday.
 
-The two analyses deliberately keep different failed-bank policies visible: the team's canonical baseline uses zero recovery; the independent sample leaves unknown returns missing and reports a separate zero-recovery scenario. Neither specification history is erased. The dashboard reads the 20-bank outputs, not the canonical full-sample results. The full-sample pipeline was preserved, not independently rerun in this task. The isolated pipeline was rerun after reconciliation.
+| Check | Finding and response |
+|---|---|
+| One official pipeline | Removed the parallel pipeline, alternate datasets, preview server and duplicate lockfile. `python run_all.py` runs the official Steps 00–07. Mason's dashboard assets are preserved exactly and read only `outputs/final_dataset.csv`. |
+| OCI versus AOCI | Renamed `aoci_to_equity` to `oci_2022_to_equity` in official Step 04 and updated the README/config comments. The calculation is unchanged and is not used in regressions. EQCCOMPI is an annual OCI flow, not accumulated AOCI. |
+| Zions reconciliation | Step 07 reads the sourced disclosure CSV and official raw FDIC report. Five independently transcribed rounded values match within the stated tolerance; AOCI component arithmetic also passes. Output tables document the units, source locations and approximate transfer-loss assumption. |
+| Official rebuild | Ran `python run_all.py` from the repo root with all four licensed CRSP files in `data/raw/crsp/`. All eight stages and all nine existing hand checks passed, as did the new reconciliation assertions. |
+| Dataset preservation | Compared the full rebuilt dataset with its pre-change version after renaming the OCI header. Keys, flags, missingness and values match within absolute tolerance 1e-12; the largest observed float difference was below 7e-16. Retained the canonical numeric serialization after verification so the committed final-dataset diff changes only that header. The regression tables, summary statistics and original hand-check report are unchanged. |
+| Proposal traceability | Real rows come from the official final dataset; regression entries match the published regression table and CSV; the mean comes from summary statistics; the passing-check count comes from the official hand-check report. The mockups are screenshots of Mason's running dashboard. No separate development results appear in the proposal. |
+| Specification record | Retained existing #1–#10; added Zions entries #11–#12 and the dated retrospective historical-screen plan. Removed entries applying only to the abandoned pipeline. No new regression specifications or failed-bank policies were introduced. |
+| Licensed inputs | Raw CRSP and row-level interim paths remain ignored. Only derived outputs are staged. Mason's route allowlist serves public dashboard assets and the official final CSV, never raw data. |
+
+### Unresolved research limits
+
+Exact remaining transferred-loss balances, cross-bank transfer collection and the original FFIEC bulk-file comparison remain outstanding. The approximate Zions ratio is not used as a special adjustment in the official regressions. The historical screen has not been validated and is not a live-quarter screen. Friday's team review should also reassess the README's existing validity threats and the sensitivity to imputed failed-bank outcomes.

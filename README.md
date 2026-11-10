@@ -1,26 +1,3 @@
-# Checkpoint 2 review package
-
-**Due Saturday, November 14, 2026.** This branch adds the proposal, dashboard skeleton, Morgan's Zions note, and self-audit alongside the team's newly merged full-sample CRSP pipeline. The canonical `run_all.py` and full-sample outputs are preserved.
-
-- [Proposal / HW8](PROPOSAL.md), [dashboard mockup](docs/images/dashboard_mockup.png), [self-audit](audits/01_self_audit.md).
-- [Morgan's sourced Zions explanation](docs/zions_measurement.md): EQCCOMPI is an OCI flow, not an accumulated AOCI balance. The full-sample legacy `aoci_to_equity` name is therefore misleading; it is not used in that pipeline's regressions.
-- [Independent 20-bank sample](outputs/checkpoint2_dataset.csv), [eight hand checks](outputs/checkpoint2_hand_checks.md), [descriptive diagnostic](outputs/regression_diagnostic.json).
-
-## Reproduce the Checkpoint 2 sample and dashboard
-
-Install `requirements-lock.txt` in a Python 3.12 virtual environment. Place the licensed daily, market and delisting delivery CSVs in `data/raw/crsp_delivery/ant728_request/`. Then run:
-
-```powershell
-python run_checkpoint2.py
-python code/preview_dashboard.py
-```
-
-Open `http://127.0.0.1:8766/app/index.html`. Preview serves an explicit allowlist of public assets; raw licensed files are never served. Sample scripts live in `code/checkpoint2/` and sample intermediates in `data/processed/checkpoint2/`, so they do not overwrite canonical full-sample outputs. No hosted dashboard URL is claimed.
-
-The independent sample preserves unknown SVB/Signature outcomes and exports a zero-recovery scenario separately. The team's canonical full-sample analysis uses zero recovery in its baseline; both choices remain documented in `specs_tried.md`. The dashboard currently shows the verified 20-bank sample, not full-sample inference. Its historical screen is not live or validated. Original FFIEC comparisons and exact remaining transfer-loss balances remain outstanding.
-
-## Team's canonical full-sample workflow
-
 # FIN 331 Final Project: Team Pandas
 
 **Team:** Andrew Temo (ant728), Mason Friedman (MasonF9897897), Morgan Waddell (mow228-boop), Ryan Carr (rcarr37)
@@ -46,6 +23,16 @@ Current outputs:
 - [`outputs/summary_stats.csv`](outputs/summary_stats.csv): descriptive statistics
 - [`outputs/hand_checks.md`](outputs/hand_checks.md): independent recomputations, all passing
 
+### Checkpoint 2 dashboard
+
+From the repository root, run `python3 app/serve.py` and open
+`http://127.0.0.1:8765/app/`. The app reads the committed
+[`outputs/final_dataset.csv`](outputs/final_dataset.csv) and requires no package
+install. The local server serves only the dashboard assets and this published
+CSV. See [dashboard instructions](app/README.md) for the data contract.
+
+[Proposal (HW8)](PROPOSAL.md) · [Zions measurement note](docs/zions_measurement.md) · [Self-audit](audits/01_self_audit.md)
+
 ### Pipeline
 | Step | Script | Reads | Writes |
 |---|---|---|---|
@@ -56,6 +43,7 @@ Current outputs:
 | 4 | `code/04_build_dataset.py` | steps 0, 1, 3 | `data/processed/bank_measures.csv`, `outputs/final_dataset.csv` |
 | 5 | `code/05_regressions.py` | `outputs/final_dataset.csv` | `outputs/regressions_v0.*`, `outputs/summary_stats.csv` |
 | 6 | `code/06_hand_checks.py` | raw files, outputs | `outputs/hand_checks.md` |
+| 7 | `code/07_zions_reconciliation.py` | sourced Zions disclosures and raw FDIC report | `outputs/zions_reconciliation.csv`, `outputs/zions_measure_comparison.csv` |
 
 Settings (event dates, windows, call report quarter, field list, delisting assumption) live in one place: `code/config.py`.
 
@@ -78,7 +66,7 @@ Settings (event dates, windows, call report quarter, field list, delisting assum
 | `uninsured_dep_share` | Uninsured domestic deposits / domestic deposits (`DEPUNINS / DEPDOM`, FDIC fields in $ thousands, summed across the entity's banks). For the ~50 banks without `DEPUNINS`: amount in accounts over $250K − $250K × number of those accounts |
 | `htm_loss_to_equity` | `(SCHA − SCHF) / EQTOT`: held-to-maturity loss not yet in book equity |
 | `sec_loss_to_equity` | `((SCHA − SCHF) + (SCAA − SCAF)) / EQTOT`: all securities losses |
-| `aoci_to_equity` | `EQCCOMPI / EQTOT`: other comprehensive income flow (after tax), despite the legacy column name. This is not the accumulated AOCI balance; not used in the regressions. |
+| `oci_2022_to_equity` | `EQCCOMPI / EQTOT`: 2022 other comprehensive income flow / equity (after tax); not accumulated AOCI and not a securities-only loss measure. Not used in the regressions |
 | `htm_share_of_securities` | `SCHA / (SCHA + SCAF)` |
 | `log_assets` | log of total assets (`ASSET`) |
 | `bhr_0_2` | Buy-and-hold return over trading days 0 to +2 (Mar 9, 10, 13, 2023), including the delisting return on the delisting date |
@@ -89,7 +77,7 @@ Settings (event dates, windows, call report quarter, field list, delisting assum
 ### Threats to validity (so far)
 1. **Failed banks' missing delisting returns.** SVB and Signature stop trading on Mar 10 with no CRSP delisting return. We set it to −100% (shareholders were wiped out), which makes their BHAR about −96%. Dropping them instead (spec R3) cuts the uninsured-deposit coefficient by more than half (−0.15 to −0.06). See `specs_tried.md`.
 2. **Look-ahead in the data vintage:** the FDIC API serves the current version of Q4 2022 data, which may include amendments filed after March 2023. To do: compare a few banks with the FFIEC bulk files.
-3. **Loss measure:** losses on securities moved from AFS to HTM sit in equity (AOCI), not in the HTM gap (Zions shows a negative HTM loss). Securities-only measures also ignore losses on loans.
+3. **Loss measure:** `EQCCOMPI` is an annual OCI flow, not accumulated AOCI; the diagnostic column is now `oci_2022_to_equity`. See [Morgan’s reconciliation](docs/zions_measurement.md). Losses on securities moved from AFS to HTM sit in equity (AOCI), not in the HTM gap (Zions shows a negative HTM loss). Securities-only measures also ignore losses on loans.
 4. **Custody banks:** State Street (101%), BNY Mellon (93%), and Citi (82%) have very high uninsured shares, but most of those deposits are operational accounts for institutional clients, which behave differently from a startup's payroll account. One ratio is slightly above 1 because the FDIC's uninsured estimate and domestic deposits are measured differently.
 5. **Outliers in ratios:** `sec_loss_to_equity` has a few extreme values (banks with thin equity). No winsorizing yet; any choice we make will be logged.
 6. **Entities without FDIC data:** 16 of 343 don't match (mostly non-banks). A few real bank holding companies are lost to ID mismatches.
