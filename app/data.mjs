@@ -1,11 +1,16 @@
-const textColumns = ["ticker", "entity_name", "call_report_date", "car_note"];
+const textColumns = ["rssd_id", "ticker", "name"];
 const numericColumns = [
   "total_assets_bn",
   "uninsured_dep_share",
   "sec_loss_to_equity",
   "htm_loss_to_equity",
-  "car_0_2",
+  "bhar_0_2",
 ];
+const booleanColumns = ["in_sample", "dlret_imputed", "has_fdic", "has_returns", "positive_equity"];
+const optionalNumericColumns = ["bhr_0_2", "car_0_2", "n_event_days"];
+const optionalBooleanColumns = ["delisted_in_window"];
+// The pipeline has no delisting flags for rows without CRSP return observations.
+const nullableBooleans = new Set(["dlret_imputed", "delisted_in_window"]);
 const decimal = /^[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?$/;
 
 function csvRecords(text) {
@@ -60,41 +65,34 @@ function csvRecords(text) {
   return records;
 }
 
-function isDate(value) {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
-  const date = new Date(`${value}T00:00:00Z`);
-  return Number.isFinite(date.valueOf()) && date.toISOString().slice(0, 10) === value;
-}
-
-/** Read one dashboard output row per ticker. Keep missing numbers distinct from zero. */
+/** Read one dashboard output row per RSSD ID. Keep missing values distinct from zero and false. */
 export function parseDashboardCsv(text) {
   const [header = [], ...records] = csvRecords(text);
   const headers = header.map((value) => value.trim());
   const column = new Map(headers.map((name, index) => [name, index]));
-  const requiredColumns = [...textColumns, ...numericColumns];
+  const requiredColumns = [...textColumns, ...numericColumns, ...booleanColumns];
   const missing = requiredColumns.filter((name) => !column.has(name));
   if (missing.length) throw new Error(`Missing CSV columns: ${missing.join(", ")}.`);
   if (column.size !== headers.length) throw new Error("The CSV has duplicate column names.");
   if (!records.length) throw new Error("The CSV has no bank rows.");
 
-  const tickers = new Set();
+  const numbers = [...numericColumns, ...optionalNumericColumns.filter((name) => column.has(name))];
+  const booleans = [...booleanColumns, ...optionalBooleanColumns.filter((name) => column.has(name))];
+  const rssdIds = new Set();
   return records.map((record, index) => {
     const label = `CSV record ${index + 2}`;
     if (record.length !== headers.length) {
       throw new Error(`${label} has ${record.length} columns; expected ${headers.length}.`);
     }
 
-    const read = (name) => record[column.get(name)].trim();
-    const row = Object.fromEntries(textColumns.map((name) => [name, read(name)]));
-    if (!row.ticker || !row.entity_name) throw new Error(`${label} is missing a ticker or bank name.`);
-    if (!isDate(row.call_report_date)) throw new Error(`${label} needs a valid YYYY-MM-DD call report date.`);
+    const read = (name) => record[column.get(name)];
+    const row = { rssd_id: read("rssd_id").trim(), ticker: read("ticker"), name: read("name") };
+    if (!row.rssd_id) throw new Error(`${label} is missing an RSSD ID.`);
+    if (rssdIds.has(row.rssd_id)) throw new Error(`${label} repeats RSSD ID ${row.rssd_id}.`);
+    rssdIds.add(row.rssd_id);
 
-    const key = row.ticker.toUpperCase();
-    if (tickers.has(key)) throw new Error(`${label} repeats ticker ${row.ticker}.`);
-    tickers.add(key);
-
-    for (const name of numericColumns) {
-      const value = read(name);
+    for (const name of numbers) {
+      const value = read(name).trim();
       if (value === "") {
         row[name] = null;
       } else {
@@ -103,6 +101,17 @@ export function parseDashboardCsv(text) {
           throw new Error(`${label} has an invalid number in ${name}.`);
         }
         row[name] = number;
+      }
+    }
+
+    for (const name of booleans) {
+      const value = read(name).trim().toLowerCase();
+      if (value === "true" || value === "false") {
+        row[name] = value === "true";
+      } else if (value === "" && nullableBooleans.has(name)) {
+        row[name] = null;
+      } else {
+        throw new Error(`${label} has an invalid boolean in ${name}; expected True or False.`);
       }
     }
     return row;

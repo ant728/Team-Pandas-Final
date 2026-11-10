@@ -3,57 +3,48 @@
 From the repository root, run:
 
 ```sh
-python3 -m http.server 8765 --bind 127.0.0.1
+python3 app/serve.py
 ```
 
-Open <http://127.0.0.1:8765/app/>. Use the server rather than opening
-`index.html` directly so the browser can load the CSV. Press Ctrl+C to stop
-the server. No JavaScript packages or external services are required.
+Open <http://127.0.0.1:8765/app/>. No package install is needed to view the
+committed results. The server binds to your own machine and serves only
+the dashboard assets and the published CSV. Press Ctrl+C to stop it.
 
-- **Intro** explains the question and shows data coverage.
-- **Method** describes the pre-event balance-sheet measures and CAR.
-- **March 2023 Results** shows the four complete yfinance event CARs in the
-  original six-bank sample. Select a bank or its point to inspect its values.
-- **Who's Next** shows all six banks' December 2022 reports, with search and
-  numeric sorting. It is a historical screen demonstration, not a current
-  ranking or a validation result.
-
-## Optional local CRSP preview
-
-With authorized access to the professor's CRSP ZIP, run the following from
-the root, replacing the archive path as needed:
-
-```sh
-python3 -B code/05_crsp_dashboard_preview.py "/path/to/ant728_request.zip"
-```
-
-This reads the ZIP without extracting it and writes
-`outputs/poc_crsp_rows.csv`. Reload the dashboard to switch between the
-original SPY-based CAR and the CRSP value-weighted market-model CAR. The
-CRSP preview recovers Comerica; SVB's CAR stays blank because its event
-window is incomplete. Neither preview imputes SVB's delisting return.
-
-The ZIP stays local. Only per-bank aggregates and public balance-sheet
-measures reach the dashboard. The generated CRSP preview is ignored by Git.
-Do not place the ZIP or raw daily records under the web server root.
+- **Intro** explains the question and shows the total and analysis sample counts.
+- **Method** explains the December 2022 Call Reports and the March 2023 event.
+- **March 2023 Results** plots only entities marked `in_sample` with both
+  uninsured deposit share and buy-and-hold abnormal return (BHAR).
+  Hover or select a point to see the original values. The bank selector also
+  lets you inspect entities that are not on the plot.
+- **Who's Next** is a sortable, searchable view of the historical balance
+  sheets. Use the sample filter to see excluded entities and their reasons.
+  It is not a current ranking or a validated failure prediction.
 
 ## Data contract
 
-The browser reads only `outputs/poc_final_rows.csv` and, when present,
-`outputs/poc_crsp_rows.csv`. Each file has one row per ticker for December
-31, 2022. The optional preview must use the same balance-sheet snapshot as
-the original.
+The dashboard reads only [`outputs/final_dataset.csv`](../outputs/final_dataset.csv),
+produced by `code/04_build_dataset.py`. Each row is one listed entity.
+The underlying bank measures are from December 2022, as defined in the pipeline.
 
 | Field | Used for |
 |---|---|
-| `ticker`, `entity_name`, `call_report_date` | Entity label, date, and unique key |
-| `uninsured_dep_share` | Scatter x-axis and screen, stored as a fraction |
-| `car_0_2`, `car_note` | Scatter y-axis and missing-return explanation |
-| `total_assets_bn` | Scatter size and table column, in billions of dollars |
-| `sec_loss_to_equity` | Scatter color and screen, preliminary HTM + AFS measure |
-| `htm_loss_to_equity` | Comparison column for the HTM-only measure |
+| `rssd_id` | Unique entity key for the table, chart, and selector |
+| `ticker`, `name` | Display labels; the entity name is used when the ticker is blank |
+| `uninsured_dep_share` | X-axis and historical screen |
+| `bhar_0_2` | Y-axis: bank buy-and-hold return minus the CRSP value-weighted market buy-and-hold return over March 9, 10, and 13 |
+| `bhr_0_2` | Bank's buy-and-hold return before subtracting the market, shown in the inspector |
+| `total_assets_bn` | Dot size and table column, in billions of dollars |
+| `sec_loss_to_equity`, `htm_loss_to_equity` | Securities loss / equity sets the dot color; the table also shows the HTM-only measure |
+| `in_sample` | Official sample flag from the pipeline |
+| `has_fdic`, `has_returns`, `positive_equity` | Explain exclusions in the inspector and historical table |
+| `dlret_imputed` | Outlines points for which the pipeline assumed a total loss at delisting |
 
-Missing numeric values stay blank. When the pipeline moves to a
-buy-and-hold return or revises the loss measure, update the field, label,
-and Method definition together. The CRSP generator is an optional
-coverage preview; it does not modify or replace `run_all.py`.
+The app preserves missing values and displays them as dashes. Color
+saturates at the plotted sample's 95th percentile of securities losses
+relative to equity, so extreme ratios do not wash out the rest of the
+chart. The original ratios still appear in the table and tooltips.
+
+To rebuild the results, follow the [main README](../README.md#how-to-run)
+and run `python run_all.py` with the licensed inputs under the ignored
+`data/raw/crsp/` directory. The server never serves those inputs or any
+files under `data/interim/`. The dashboard does not recompute returns.

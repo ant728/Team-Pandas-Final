@@ -1,22 +1,20 @@
 # Checkpoint 2 self-audit — dashboard contribution
 
-**Scope:** Mason Friedman’s dashboard and the six-bank inputs in the
-November 10 checkpoint workspace. This records the dashboard checks;
-the team’s skeptical review and integrated pipeline sign-off are still open.
+**Scope:** Mason Friedman's dashboard after integrating the full CRSP
+pipeline from [PR #7](https://github.com/ant728/Team-Pandas-Final/pull/7).
+This is a dashboard audit for Checkpoint 2 ([issue #4](https://github.com/ant728/Team-Pandas-Final/issues/4)).
 
 | Check | Finding and response |
 |---|---|
-| Reproducibility | Served `app/` with Python’s local HTTP server and loaded Intro, Method, March 2023 Results, and Who’s Next in a browser. No package install or API request is needed by the dashboard. It reads two named CSVs under `outputs/`. |
-| Missing returns | The original output has four usable CARs. The optional CRSP preview has five: Comerica now has a complete event window. SVB is absent from both plots and stays in the balance-sheet table. In the CRSP archive, SVB has no reported March 10 delisting return or usable March 13 return. No return was imputed. |
-| Chart definitions | X uses uninsured domestic deposits / domestic deposits. Y uses summed market-model CAR on March 9, 10, and 13. Size uses assets in billions of dollars, and color uses the preliminary HTM + AFS loss / equity ratio. The source selector changes the stated benchmark along with the observations. Clicking a dot or selecting a bank shows the source values. |
-| Numeric sorting | The six-bank table defaults to highest uninsured share (SVB, 93.88%). Sorting HTM loss / equity ascending puts Zions (−2.31%) ahead of Comerica (0%). Searching for Zions narrows the results to one row. |
-| CRSP preview | The generator matched four issuers using RSSD and confirmed two direct banks by issuer name and unique dated tickers. An independent OLS calculation reproduced the five CARs. The app receives only bank-level outputs. The raw ZIP and daily records stay outside the repository and browser. |
-| Interpretation | Who’s Next shows December 2022 reports, without a failure flag or a current-quarter ranking. The four- and five-point scatters describe coverage and associations; they are not a regression or a validation test. |
+| Rebuild | Ran `python run_all.py` in an isolated checkout using the four supplied CRSP inputs. All seven stages completed and all nine hand checks passed. The regenerated final dataset matched the committed output to numeric precision. |
+| Data source | The app reads only `outputs/final_dataset.csv`. There are 343 unique RSSD IDs and 323 in-sample rows, all with both plotted values. The other 20 stay in the table: 16 have no FDIC match and four have no event returns. |
+| Return measure | The scatter uses `bhar_0_2`: compounded bank return minus compounded CRSP value-weighted market return over March 9, 10, and 13. Market-model CAR remains a separate output. |
+| Delisting sensitivity | SVB and Signature each show a buy-and-hold return of −100% and a BHAR of −96.16%. Their points and tooltips identify the assumed delisting returns using `dlret_imputed`. These are estimates under the pipeline's assumption in `specs_tried.md` #5, not observed CRSP delisting returns. |
+| Browser review | Opened Intro, Method, March 2023 Results, and Who's Next. Verified all 323 plot points, both imputed labels, bank inspection, ticker/name fallback, search, numeric sorting with missing values last, and the included/excluded filters. The axes cover the full plotted range. The color scale saturates at the 95th percentile; raw ratios still appear in the inspector and table. |
+| Licensed inputs | The local server serves only the dashboard assets and the published final dataset. The four raw inputs and row-level interim files were used in the isolated rebuild and were not served, staged, or committed. |
 
-**For the integrated checkpoint:** After the team refreshes the sample,
-recheck that the dashboard labels reflect the adopted return and loss
-measures, confirm both CSVs use the same balance-sheet snapshot, and rerun
-the app. The full team review still needs the rebuilt small-sample pipeline,
-return and regression checks, Zions treatment, the FDIC/FFIEC comparison,
-and the dated test plan. Do not treat the optional CRSP preview as the
-team’s formal delisting specification.
+**Limits:** Who's Next uses December 2022 balance sheets. It does not rank
+current banks or report a validated failure prediction. The event scatter
+shows associations; it does not establish causality. The loss measure,
+data-vintage concerns, and sensitivity to assumed delisting returns remain
+documented under “Threats to validity” in the main README.

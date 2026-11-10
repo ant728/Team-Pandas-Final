@@ -45,8 +45,8 @@
           <p class="eyebrow">Historical sample</p>
           <p class="snapshot-date" id="intro-quarter">December 2022</p>
           <dl class="snapshot-grid">
-            <div><dt>Banks in sample</dt><dd id="intro-count">—</dd></div>
-            <div><dt>Complete returns</dt><dd id="intro-coverage">—</dd></div>
+            <div><dt>Entities in file</dt><dd id="intro-count">—</dd></div>
+            <div><dt>Analysis sample</dt><dd id="intro-coverage">—</dd></div>
           </dl>
           <p id="intro-source" class="snapshot-foot" aria-live="polite">Loading the checkpoint data…</p>
         </aside>
@@ -80,7 +80,7 @@
           <h2>December 2022 Call Reports</h2>
           <p>The pipeline takes FDIC BankFind figures and rolls bank subsidiaries up to the listed entity where needed. The dashboard reads the resulting bank-level output.</p>
           <dl class="definition-list">
-            <div><dt>Uninsured deposit share</dt><dd>Uninsured domestic deposits ÷ domestic deposits.</dd></div>
+            <div><dt>Uninsured deposit share</dt><dd>Estimated uninsured domestic deposits ÷ domestic deposits. When banks do not report the estimate, the pipeline approximates it from balances and counts of accounts above the insurance limit.</dd></div>
             <div><dt>Securities loss / equity</dt><dd>The gap between amortized cost and fair value for held-to-maturity and available-for-sale securities, divided by reported equity.</dd></div>
             <div><dt>HTM loss / equity</dt><dd>The same ratio using only held-to-maturity securities.</dd></div>
           </dl>
@@ -90,38 +90,34 @@
           <h2>March 9–13, 2023</h2>
           <p>March 9 was the first trading day after SVB’s March 8 announcement. The event window covers March 9, 10, and 13.</p>
           <dl class="definition-list">
-            <div><dt>Abnormal return</dt><dd>Observed daily stock return minus the return predicted by a market model estimated from trading days −250 to −30.</dd></div>
-            <div><dt>Cumulative abnormal return (CAR)</dt><dd>The sum of the three daily abnormal returns. A bank needs usable data for all three event days.</dd></div>
-            <div><dt>Benchmarks</dt><dd>The original yfinance output uses SPY. The optional CRSP preview uses the CRSP value-weighted market index. Results from the two sources are shown separately.</dd></div>
+            <div><dt>Buy-and-hold return</dt><dd>Compound the bank’s daily CRSP returns over the event window, including any delisting return. For SVB and Signature, the pipeline assumes a total loss at delisting because CRSP does not report a delisting return.</dd></div>
+            <div><dt>Buy-and-hold abnormal return (BHAR)</dt><dd>Subtract the CRSP value-weighted market’s compounded return over the same window from the bank’s buy-and-hold return. This is the measure plotted.</dd></div>
+            <div><dt>Analysis sample</dt><dd>The pipeline marks an entity in sample when it matches to FDIC data, has an event return, and has positive equity. Market-model CAR is a separate measure kept in the output.</dd></div>
           </dl>
         </article>
       </div>
-      <aside class="notice method-note"><strong>What is still provisional.</strong> The securities ratio does not correct for all prior AFS-to-HTM transfers. This sample uses summed CAR; the planned buy-and-hold specification is a separate measure. Coverage and loss measurement limit what the scatter can tell us.</aside>
+      <aside class="notice method-note"><strong>How to read the chart.</strong> Dot size shows assets. Color gets darker up to the plotted sample’s 95th percentile of securities loss relative to equity; the underlying values are unchanged. The securities ratio does not correct for all prior AFS-to-HTM transfers.</aside>
     </section>
 
     <section id="results" class="view" aria-labelledby="results-title" hidden>
-      <div class="page-heading heading-row">
-        <div>
-          <p class="eyebrow">03 / Event study</p>
-          <h1 id="results-title">March 2023 Results</h1>
-          <p class="lede">Did banks with more uninsured deposits experience a worse market reaction?</p>
-        </div>
-        <label id="source-control" class="field" hidden>Return source
-          <select id="return-source"></select>
-        </label>
+      <div class="page-heading">
+        <p class="eyebrow">03 / Event study</p>
+        <h1 id="results-title">March 2023 Results</h1>
+        <p class="lede">Did banks with more uninsured deposits experience a worse market reaction?</p>
       </div>
       <div id="results-status" class="notice" role="status">Loading the checkpoint data…</div>
       <div id="results-grid" class="results-grid" hidden>
         <article class="card chart-card">
           <div class="chart-heading">
-            <div><h2>Deposit mix and stock reaction</h2><p id="chart-method" class="muted"></p></div>
+            <div><h2>Deposit mix and stock reaction</h2><p class="muted">Buy-and-hold abnormal return (BHAR) vs. the CRSP value-weighted market</p></div>
             <span class="pill">Mar 9, 10 &amp; 13</span>
           </div>
           <div id="plot" class="plot"></div>
           <div class="chart-legend">
             <span><i class="dot-small"></i><i class="dot-large"></i> Larger dots = more assets</span>
-            <span><i class="gradient"></i> Darker = higher securities loss / equity</span>
+            <span><i class="gradient"></i> <span id="loss-legend">Darker = higher securities loss / equity</span></span>
           </div>
+          <p id="imputed-note" class="imputed-note" hidden></p>
         </article>
         <aside class="card details">
           <label for="bank-select" class="field">Inspect a bank</label>
@@ -141,17 +137,27 @@
       <article id="screen-card" class="card table-card" hidden>
         <div class="table-toolbar">
           <div><h2>Compare banks</h2><p id="table-count" class="muted" role="status"></p></div>
-          <label class="field">Find a bank <input id="bank-filter" type="search" placeholder="Name or ticker" autocomplete="off"></label>
+          <div class="table-filters">
+            <label class="field">Find a bank <input id="bank-filter" type="search" placeholder="Name or ticker" autocomplete="off"></label>
+            <div class="field">
+              <label for="sample-filter">Analysis sample</label>
+              <select id="sample-filter">
+                <option value="all">All entities</option>
+                <option value="included">In sample</option>
+                <option value="excluded">Outside sample</option>
+              </select>
+            </div>
+          </div>
         </div>
         <div class="table-scroll" tabindex="0" role="region" aria-label="Sortable bank comparison table">
           <table>
             <thead><tr>
-              <th scope="col"><button data-sort="ticker">Bank <span aria-hidden="true">↕</span></button></th>
+              <th scope="col"><button data-sort="bank">Bank <span aria-hidden="true">↕</span></button></th>
               <th scope="col" aria-sort="descending"><button data-sort="uninsured_dep_share">Uninsured share <span aria-hidden="true">↓</span></button></th>
               <th scope="col"><button data-sort="sec_loss_to_equity">Securities loss / equity <span aria-hidden="true">↕</span></button></th>
               <th scope="col"><button data-sort="htm_loss_to_equity">HTM loss / equity <span aria-hidden="true">↕</span></button></th>
               <th scope="col"><button data-sort="total_assets_bn">Assets ($B) <span aria-hidden="true">↕</span></button></th>
-              <th scope="col">Report date</th>
+              <th scope="col">Event-study status</th>
             </tr></thead>
             <tbody id="bank-rows"></tbody>
           </table>

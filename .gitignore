@@ -1,7 +1,5 @@
 # Raw data is recreated by the download code, so it stays out of git
 data/raw/
-# Optional CRSP-derived preview is regenerated locally.
-outputs/poc_crsp_rows.csv
 
 # Secrets: never commit API keys
 .env

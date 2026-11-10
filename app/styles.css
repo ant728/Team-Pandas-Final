@@ -65,7 +65,6 @@ main:focus { outline: none; }
 .signal p { color: var(--muted); margin-top: 7px; font-size: .94rem; }
 .page-heading { margin: clamp(35px, 5vw, 58px) 0 24px; }
 .page-heading h1 { font-size: clamp(2.3rem, 5.1vw, 3.9rem); }
-.heading-row { display: flex; justify-content: space-between; align-items: end; gap: 15px; }
 .method-card { padding: clamp(19px, 3vw, 30px); }
 .method-card > p:not(.eyebrow) { margin: 12px 0; color: var(--muted); }
 .definition-list > div { padding: 11px 0; border-top: 1px solid var(--subtle); }
@@ -85,7 +84,10 @@ main:focus { outline: none; }
 .plot .axis-title { font-size: 12px; font-weight: 650; fill: var(--ink); }
 .plot .ticker-label { font-size: 11px; font-weight: 750; fill: var(--ink); paint-order: stroke; stroke: white; stroke-width: 3px; stroke-linejoin: round; }
 .plot [role="button"] { cursor: pointer; }
-.plot [role="button"]:focus-visible circle { stroke: var(--ink); stroke-width: 3px; }
+.plot circle { fill-opacity: .78; stroke: #33584b; stroke-width: .65; }
+.plot [data-imputed="true"] circle { stroke: #9b541a; stroke-width: 2; fill-opacity: 1; }
+.plot [role="button"]:hover circle, .plot [role="button"]:focus-visible circle,
+.plot [aria-pressed="true"] circle { stroke-width: 2.6; fill-opacity: 1; }
 .plot-empty { padding: 22px 0; }
 .chart-legend { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; margin-top: 6px; font-size: .77rem; color: var(--muted); }
 .chart-legend span { display: flex; align-items: center; gap: 5px; }
@@ -93,6 +95,7 @@ main:focus { outline: none; }
 .dot-small { width: 6px; height: 6px; }
 .dot-large { width: 13px; height: 13px; }
 .chart-legend .gradient { width: 34px; height: 8px; background: linear-gradient(90deg, #9fc4aa, #28604e); }
+.imputed-note, .detail-note { color: #694215; font-size: .8rem; margin-top: 10px; }
 .field { display: grid; gap: 4px; color: var(--muted); font-size: .78rem; font-weight: 700; }
 select, input { min-width: 0; max-width: 100%; background: var(--white); border: 1px solid #a9b9af; border-radius: 8px; color: var(--ink); padding: 8px 10px; font-size: .89rem; }
 .details select { width: 100%; margin-top: 4px; }
@@ -103,6 +106,7 @@ select, input { min-width: 0; max-width: 100%; background: var(--white); border:
 .details .muted { margin-top: 7px; font-size: .79rem; }
 .table-card { margin-top: 16px; overflow: hidden; }
 .table-toolbar { padding: 18px 19px; }
+.table-filters { display: flex; flex-wrap: wrap; gap: 9px; }
 .table-scroll { overflow: auto; }
 table { border-collapse: collapse; width: 100%; min-width: 770px; font-size: .88rem; }
 th, td { padding: 11px 15px; border-top: 1px solid var(--subtle); text-align: right; }
@@ -135,7 +139,6 @@ tbody tr:hover { background: #f3f7f1; }
   .hero { grid-template-columns: 1fr; padding-bottom: 32px; }
   .hero-break { display: none; }
   .two-up { grid-template-columns: 1fr; }
-  .heading-row { flex-direction: column; align-items: start; }
   .chart-card, .details { padding: 13px; }
   .plot .axis-title { font-size: 10px; }
 }
