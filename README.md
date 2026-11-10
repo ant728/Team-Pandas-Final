@@ -12,7 +12,7 @@
 
 ### How to run
 1. `pip install -r requirements.txt`
-2. Put the four CRSP files in `data/raw/crsp/`: `crsp_daily_2022_2023.csv`, `crsp_market_vwretd.csv`, `crsp_delistings.csv`, `crsp_permcos.csv`. They are **licensed (Lehigh users only)** and not in the repo. Get them from a teammate.
+2. Put the four CRSP files in `data/raw/crsp/`: `crsp_daily_2022_2023.csv`, `crsp_market_vwretd.csv`, `crsp_delistings.csv`, `crsp_permcos.csv`. They are **licensed (Lehigh users only)** and not in the repo. Get them from the Google Drive folder Prof. Bowen shared with the team.
 3. `python run_all.py`
 
 `run_all.py` downloads everything else, builds the dataset, runs the regressions, and runs the hand checks. It stops if any check fails.
