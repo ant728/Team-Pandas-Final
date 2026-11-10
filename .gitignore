@@ -1,6 +1,10 @@
 # Raw data is recreated by the download code, so it stays out of git
 data/raw/
 
+# Local CRSP-derived outcomes are kept with the licensed local data for this checkpoint
+data/processed/crsp_oos_return_summary.csv
+outputs/crsp_oos_outcome_summary.md
+
 # Secrets: never commit API keys
 .env
 *.key
@@ -13,6 +17,3 @@ __pycache__/
 # OS clutter
 .DS_Store
 Thumbs.db
-
-# Row-level CRSP data (licensed: Lehigh users only)
-data/interim/
