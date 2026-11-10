@@ -8,8 +8,10 @@ STEPS = [
     "00_build_universe.py",
     "01_download_fdic.py",
     "02_download_prices.py",
-    "03_build_dataset.py",
-    "04_hand_checks.py",
+    "03_crsp_returns.py",
+    "04_build_dataset.py",
+    "05_regressions.py",
+    "06_hand_checks.py",
 ]
 
 for step in STEPS:
