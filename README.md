@@ -23,6 +23,14 @@ Current outputs:
 - [`outputs/summary_stats.csv`](outputs/summary_stats.csv): descriptive statistics
 - [`outputs/hand_checks.md`](outputs/hand_checks.md): independent recomputations, all passing
 
+### Checkpoint 2 dashboard
+
+From the repository root, run `python3 app/serve.py` and open
+`http://127.0.0.1:8765/app/`. The app reads the committed
+[`outputs/final_dataset.csv`](outputs/final_dataset.csv) and requires no package
+install. The local server serves only the dashboard assets and this published
+CSV. See [dashboard instructions](app/README.md) for the data contract.
+
 ### Pipeline
 | Step | Script | Reads | Writes |
 |---|---|---|---|
