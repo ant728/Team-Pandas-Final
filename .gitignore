@@ -13,3 +13,6 @@ __pycache__/
 # OS clutter
 .DS_Store
 Thumbs.db
+
+# Row-level CRSP data (licensed: Lehigh users only)
+data/interim/
