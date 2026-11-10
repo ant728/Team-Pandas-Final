@@ -90,7 +90,7 @@ The [Zions measurement note](docs/zions_measurement.md) explains why a negative 
 | Threat | Check or response; remaining limitation |
 |---|---|
 | Missing failed-bank delisting values | Explicit baseline imputation and R3 exclusion sensitivity; imputed points are labeled in the dashboard |
-| Later-amended historical reports | Fix the reporting quarter and log API vintage; original FFIEC bulk-file comparisons remain to be completed |
+| Later-amended historical reports | Fix the reporting quarter and log API vintage; the FDIC API versus FFIEC bulk-file check is in progress in Ryan’s PR |
 | Transfers, taxes and OCI/AOCI confusion | Separate sourced Zions reconciliation; correctly label the OCI flow; do not gross up total AOCI or assume all of it is bond losses |
 | Different business models and extreme ratios | Disclose custody-bank deposit composition and thin-equity outliers; do not choose winsorization after seeing preferred results |
 | Entity matching and incomplete coverage | Assert unique keys and merge cardinality; retain excluded entities and flags; some bank/parent links remain imperfect |
@@ -108,7 +108,9 @@ Mason's dashboard reads only `outputs/final_dataset.csv`. Intro explains the que
 
 ![Official event results and imputed-failure labels](docs/images/dashboard_results.png)
 
-The dated historical-screen plan is in `specs_tried.md`: use only pre-event measures, freeze eligible entities and a consistent loss definition, flag a fixed top fraction, and compare with later regulatory failures while treating mergers separately. The team already knows prominent cases, so it is a retrospective validation design, not untouched prospective preregistration. The prototype is historical; a live screen and validated failure prediction are not claimed.
+## Historical validation plan
+
+Ryan's historical validation test will assess whether pre-event fragility measures flagged banks that subsequently got into trouble; its rules belong in the [Pre-specified out-of-sample fragility screen](specs_tried.md#pre-specified-out-of-sample-fragility-screen) section of `specs_tried.md`, supplied by his PR. The historical dashboard is not a validated live prediction.
 
 ## Sources and assistance
 
