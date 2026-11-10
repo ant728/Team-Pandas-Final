@@ -19,6 +19,13 @@ python run_all.py
 - [`outputs/poc_final_rows.csv`](outputs/poc_final_rows.csv): real rows for 6 banks (proof of concept)
 - [`outputs/hand_checks.md`](outputs/hand_checks.md): independent recomputations, all passing
 
+### Checkpoint 2 dashboard preview
+
+From the repository root, run `python3 -m http.server 8765 --bind 127.0.0.1` and open
+`http://127.0.0.1:8765/app/`. The app reads the existing proof-of-concept output and
+requires no package install. See [dashboard instructions](app/README.md) for the optional
+CRSP preview and the dashboard's input contract.
+
 ### Pipeline
 | Step | Script | Reads | Writes |
 |---|---|---|---|

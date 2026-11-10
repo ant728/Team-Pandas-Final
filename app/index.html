@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#142d2b">
+  <title>Bank Fragility Monitor · Team Pandas</title>
+  <link rel="stylesheet" href="styles.css">
+  <script type="module" src="dashboard.mjs"></script>
+</head>
+<body>
+  <a class="skip-link" href="#content">Skip to content</a>
+  <header class="masthead">
+    <div class="shell masthead-inner">
+      <a class="brand" href="#intro" aria-label="Bank Fragility Monitor home">
+        <svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true">
+          <rect width="34" height="34" rx="9" fill="#c6eb98"/>
+          <path d="m8 14 9-5 9 5M10 17v7m7-7v7m7-7v7M7 26h20" stroke="#142d2b" stroke-width="1.8" stroke-linecap="round" fill="none"/>
+        </svg>
+        <span>Bank Fragility Monitor<small>Team Pandas · FIN 331</small></span>
+      </a>
+      <span class="status"><span></span> Checkpoint 2 · Prototype</span>
+    </div>
+    <nav class="shell navigation" aria-label="Dashboard pages">
+      <a href="#intro" aria-current="page">Intro</a>
+      <a href="#method">Method</a>
+      <a href="#results">March 2023 Results</a>
+      <a href="#screen">Who’s Next</a>
+    </nav>
+  </header>
+
+  <main id="content" class="shell" tabindex="-1">
+    <section id="intro" class="view" aria-labelledby="intro-title">
+      <div class="hero">
+        <div class="hero-copy">
+          <p class="eyebrow">01 / The research question</p>
+          <h1 id="intro-title">What makes a<br class="hero-break"> bank fragile?</h1>
+          <p class="lede">When Silicon Valley Bank failed, did banks with more uninsured deposits and larger bond losses see their stocks fall further?</p>
+          <div class="actions">
+            <a class="button primary" href="#results">Explore March 2023 <span aria-hidden="true">↗</span></a>
+            <a class="button secondary" href="#method">Read the method</a>
+          </div>
+        </div>
+        <aside class="snapshot" aria-label="Prototype coverage">
+          <p class="eyebrow">Historical sample</p>
+          <p class="snapshot-date" id="intro-quarter">December 2022</p>
+          <dl class="snapshot-grid">
+            <div><dt>Banks in sample</dt><dd id="intro-count">—</dd></div>
+            <div><dt>Complete returns</dt><dd id="intro-coverage">—</dd></div>
+          </dl>
+          <p id="intro-source" class="snapshot-foot" aria-live="polite">Loading the checkpoint data…</p>
+        </aside>
+      </div>
+
+      <div class="section-lead">
+        <p class="eyebrow">What we measure</p>
+        <h2>Two signals of fragility</h2>
+      </div>
+      <div class="two-up">
+        <article class="card signal">
+          <span class="signal-number">01</span>
+          <div><h3>Uninsured deposit share</h3><p>Depositors whose balances exceed insurance limits have more reason to withdraw when they fear losses. A bank that depends heavily on those deposits can face a faster run.</p></div>
+        </article>
+        <article class="card signal">
+          <span class="signal-number">02</span>
+          <div><h3>Securities losses relative to equity</h3><p>Higher interest rates can reduce the value of existing bonds. If withdrawals force sales, those losses can eat into the bank’s financial cushion.</p></div>
+        </article>
+      </div>
+    </section>
+
+    <section id="method" class="view" aria-labelledby="method-title" hidden>
+      <div class="page-heading">
+        <p class="eyebrow">02 / Study design</p>
+        <h1 id="method-title">Method</h1>
+        <p class="lede">Measure each bank before the shock. Then compare its stock return with what the broader market would predict.</p>
+      </div>
+      <div class="two-up">
+        <article class="card method-card">
+          <p class="eyebrow">Before the event</p>
+          <h2>December 2022 Call Reports</h2>
+          <p>The pipeline takes FDIC BankFind figures and rolls bank subsidiaries up to the listed entity where needed. The dashboard reads the resulting bank-level output.</p>
+          <dl class="definition-list">
+            <div><dt>Uninsured deposit share</dt><dd>Uninsured domestic deposits ÷ domestic deposits.</dd></div>
+            <div><dt>Securities loss / equity</dt><dd>The gap between amortized cost and fair value for held-to-maturity and available-for-sale securities, divided by reported equity.</dd></div>
+            <div><dt>HTM loss / equity</dt><dd>The same ratio using only held-to-maturity securities.</dd></div>
+          </dl>
+        </article>
+        <article class="card method-card">
+          <p class="eyebrow">During the event</p>
+          <h2>March 9–13, 2023</h2>
+          <p>March 9 was the first trading day after SVB’s March 8 announcement. The event window covers March 9, 10, and 13.</p>
+          <dl class="definition-list">
+            <div><dt>Abnormal return</dt><dd>Observed daily stock return minus the return predicted by a market model estimated from trading days −250 to −30.</dd></div>
+            <div><dt>Cumulative abnormal return (CAR)</dt><dd>The sum of the three daily abnormal returns. A bank needs usable data for all three event days.</dd></div>
+            <div><dt>Benchmarks</dt><dd>The original yfinance output uses SPY. The optional CRSP preview uses the CRSP value-weighted market index. Results from the two sources are shown separately.</dd></div>
+          </dl>
+        </article>
+      </div>
+      <aside class="notice method-note"><strong>What is still provisional.</strong> The securities ratio does not correct for all prior AFS-to-HTM transfers. This sample uses summed CAR; the planned buy-and-hold specification is a separate measure. Coverage and loss measurement limit what the scatter can tell us.</aside>
+    </section>
+
+    <section id="results" class="view" aria-labelledby="results-title" hidden>
+      <div class="page-heading heading-row">
+        <div>
+          <p class="eyebrow">03 / Event study</p>
+          <h1 id="results-title">March 2023 Results</h1>
+          <p class="lede">Did banks with more uninsured deposits experience a worse market reaction?</p>
+        </div>
+        <label id="source-control" class="field" hidden>Return source
+          <select id="return-source"></select>
+        </label>
+      </div>
+      <div id="results-status" class="notice" role="status">Loading the checkpoint data…</div>
+      <div id="results-grid" class="results-grid" hidden>
+        <article class="card chart-card">
+          <div class="chart-heading">
+            <div><h2>Deposit mix and stock reaction</h2><p id="chart-method" class="muted"></p></div>
+            <span class="pill">Mar 9, 10 &amp; 13</span>
+          </div>
+          <div id="plot" class="plot"></div>
+          <div class="chart-legend">
+            <span><i class="dot-small"></i><i class="dot-large"></i> Larger dots = more assets</span>
+            <span><i class="gradient"></i> Darker = higher securities loss / equity</span>
+          </div>
+        </article>
+        <aside class="card details">
+          <label for="bank-select" class="field">Inspect a bank</label>
+          <select id="bank-select"></select>
+          <div id="bank-details" aria-live="polite"></div>
+        </aside>
+      </div>
+    </section>
+
+    <section id="screen" class="view" aria-labelledby="screen-title" hidden>
+      <div class="page-heading">
+        <p class="eyebrow">04 / Fragility screen</p>
+        <h1 id="screen-title">Who’s Next</h1>
+        <p class="lede">Compare the balance sheets that were observable before the March 2023 shock.</p>
+      </div>
+      <div class="notice"><strong>Historical preview.</strong> These are pre-event reports. A current-quarter ranking and the test of which banks would have been flagged are still pending.</div>
+      <article id="screen-card" class="card table-card" hidden>
+        <div class="table-toolbar">
+          <div><h2>Compare banks</h2><p id="table-count" class="muted" role="status"></p></div>
+          <label class="field">Find a bank <input id="bank-filter" type="search" placeholder="Name or ticker" autocomplete="off"></label>
+        </div>
+        <div class="table-scroll" tabindex="0" role="region" aria-label="Sortable bank comparison table">
+          <table>
+            <thead><tr>
+              <th scope="col"><button data-sort="ticker">Bank <span aria-hidden="true">↕</span></button></th>
+              <th scope="col" aria-sort="descending"><button data-sort="uninsured_dep_share">Uninsured share <span aria-hidden="true">↓</span></button></th>
+              <th scope="col"><button data-sort="sec_loss_to_equity">Securities loss / equity <span aria-hidden="true">↕</span></button></th>
+              <th scope="col"><button data-sort="htm_loss_to_equity">HTM loss / equity <span aria-hidden="true">↕</span></button></th>
+              <th scope="col"><button data-sort="total_assets_bn">Assets ($B) <span aria-hidden="true">↕</span></button></th>
+              <th scope="col">Report date</th>
+            </tr></thead>
+            <tbody id="bank-rows"></tbody>
+          </table>
+        </div>
+        <p class="table-note">Select a column header to sort. A dash indicates an unavailable value.</p>
+      </article>
+      <p id="screen-status" class="muted" role="status">Loading the checkpoint data…</p>
+    </section>
+
+    <noscript><p class="notice">Enable JavaScript to load the data and use the dashboard.</p></noscript>
+  </main>
+  <footer class="shell footer">
+    <span>Team Pandas · FIN 331</span>
+    <span>Checkpoint 2 dashboard · Mason Friedman</span>
+  </footer>
+</body>
+</html>
