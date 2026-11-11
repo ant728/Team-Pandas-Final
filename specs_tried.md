@@ -32,6 +32,29 @@ Every specification we run goes here, including the ones we drop. Count so far: 
 - Market: CRSP value-weighted index (`vwretd`).
 
 ## Not yet run (planned, and to be written down before running)
-- The out-of-sample "who's next" test (Ryan): the screen, what counts as "flagged," and what counts as "trouble later" must be written here first.
 - Any winsorizing of the loss ratios.
 - The AOCI-based loss measure for the Zions question (Morgan).
+
+## Pre-specified out-of-sample fragility screen
+
+**Written 2026-11-10, before calculating the screen ranks or checking the named banks' ranks.** Run this only after the CRSP data and the full Q4 2022 bank-measure dataset are available.
+
+### Question and sample
+
+Would a screen formed solely from December 31, 2022 call-report data have flagged First Republic or PacWest before their later 2023 distress? The evaluation universe is the listed-bank entities linked to CRSP by the NY Fed link on 2022-12-31 (the target is the 343 PERMCOs in `requests/crsp_permcos.csv`). Use one row per listed entity, aggregating subsidiary-bank call reports according to the dated crosswalk. Do not filter on whether the entity survived or had a usable 2023 return.
+
+The ranking sample includes entities with non-missing values for both predictors below. Report the full universe size, the number ranked, and each exclusion with its reason. Never silently drop missing predictor data.
+
+### Predictors and flag rule
+
+Use the two existing Q4 2022 predictors: `uninsured_dep_share` and `sec_loss_to_equity`, where the latter is `(HTM amortized cost - HTM fair value + AFS amortized cost - AFS fair value) / total equity`. Within the eligible ranking sample, convert each predictor to a percentile rank (higher values mean greater fragility) and take their unweighted mean as the fragility score. Rank from highest to lowest. The pre-specified flag is the top 10%; include ties at the cutoff and report the resulting flagged count/share. Top 5% and top 20% may be shown as secondary sensitivity cutoffs only; do not select a cutoff based on which one flags First Republic or PacWest.
+
+This version uses the repository's existing securities-loss measure. It does not claim to capture losses transferred from AFS to HTM; if the team adopts a revised measure after documenting the Zions issue, date and record that exact formula as a new specification before computing any out-of-sample ranks.
+
+### Outcomes and reporting
+
+1. **Named cases:** report whether First Republic and PacWest appear in the top-decile flag group, with each entity's predictor values, score, percentile rank, and cutoff. These two cases were specified from Professor Bowen's feedback, not selected after examining the screen.
+2. **Broader failure outcome:** identify banks that entered FDIC receivership from 2023-03-14 through 2023-12-31 using the FDIC failed-bank records. Report the number of failures, the fraction in the top-decile group (recall), and the fraction of top-decile flags that failed (precision), with a case list.
+3. **Secondary severe-return outcome:** for listed entities, calculate CRSP buy-and-hold return from the 2023-03-13 close through the 2023-12-29 close, incorporating delisting returns. March 13 is the last close in the original SVB event window, so this outcome measures subsequent performance. Define severe loss as a return of -50% or lower. Report missing-return cases and do not treat a missing/delisted quote as a zero return. Show this outcome separately from FDIC failures.
+
+The March 9-13 event return is not used to build the 2022 score. These are descriptive screening results on a small number of crisis outcomes, not a causal test or proof of forecasting ability. Do not combine outcomes or change thresholds after inspecting results. Log any deviation below with its date and reason.
