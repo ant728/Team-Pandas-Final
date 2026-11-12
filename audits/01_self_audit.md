@@ -22,7 +22,7 @@ documented under “Threats to validity” in the main README.
 
 ## Morgan Waddell — accounting and proposal additions
 
-Review date: November 10, 2026. These checks supplement Mason's audit above; they are not a replacement for the full team Skeptical review scheduled Friday.
+Review dates: November 10 and November 12, 2026. These checks supplement Mason's audit above; they are not a replacement for the full team Skeptical review scheduled Friday.
 
 | Check | Finding and response |
 |---|---|
@@ -37,4 +37,11 @@ Review date: November 10, 2026. These checks supplement Mason's audit above; the
 
 ### Unresolved research limits
 
-Exact remaining transferred-loss balances, cross-bank transfer collection and the original FFIEC bulk-file comparison remain in progress (the latter in Ryan’s PR). The approximate Zions ratio is not used as a special adjustment in the official regressions. The historical screen has not been validated and is not a live-quarter screen. Friday's team review should also reassess the README's existing validity threats and the sensitivity to imputed failed-bank outcomes.
+Exact remaining transferred-loss balances and cross-bank transfer collection remain open. Ryan’s [FFIEC comparison](../outputs/ffiec_fdic_comparison.md) reports 24 exact field matches across four banks; it checks current-snapshot cross-source consistency, not original filing vintages. The approximate Zions ratio is not used as a special adjustment in the official regressions. The historical screen has not been validated and is not a live-quarter screen. Friday's team review should also reassess the README's existing validity threats and the sensitivity to imputed failed-bank outcomes.
+
+
+### November 12 integration check
+
+Merged main including Ryan's PR #10, preserving his README comparison section, provenance-table row, complete pre-specified screen plan and log entry. README threat #2 retains Ryan's wording. The proposal points to his screen plan and comparison report rather than duplicating his rules.
+
+Reran the official `python run_all.py`: the nine existing checks and Zions assertions pass. The optional FFIEC row is **SKIPPED** because `data/raw/ffiec_call_20221231.zip` is absent locally. The committed comparison report is preserved byte-for-byte; this run does not claim to have repeated Ryan's comparison without its raw input. The local run report includes the SKIPPED row; after checking that its nine original rows match, the published hand-check artifact was retained to avoid an unrelated diff.

@@ -1,5 +1,7 @@
 # FIN 331 Final Project: Team Pandas
 
+**Live dashboard:** https://ant728.github.io/Team-Pandas-Final/app/
+
 **Team:** Andrew Temo (ant728), Mason Friedman (MasonF9897897), Morgan Waddell (mow228-boop), Ryan Carr (rcarr37)
 
 **Status:** v0 pipeline running on the full sample (323 banks) with CRSP returns. Next: Checkpoint 2 and `PROPOSAL.md` (Sat Nov 14). Our Checkpoint 1 memo is [`STATUS.md`](STATUS.md).
@@ -57,8 +59,22 @@ Settings (event dates, windows, call report quarter, field list, delisting assum
 | Bank IDs (CERT → RSSD) | FDIC BankFind API, `https://api.fdic.gov/banks/institutions` | `code/01_download_fdic.py` | See `data/provenance_log.csv` |
 | CRSP daily returns, delistings, market return | Pulled by Prof. Bowen from WRDS (legacy CRSP daily: `dsf`, `dsenames`, `dsedelist`, `dsi`) on 2026-11-06, at our request: the 343 PERMCOs in `requests/crsp_permcos.csv`, Jan 2022–Dec 2023; variables RET, RETX, DLRET/DLSTCD (delisting), PRC, SHROUT, VOL, TICKER, COMNAM, SHRCD, EXCHCD, and VWRETD (market) | Can't be re-downloaded without CRSP access; request the same PERMCOs, dates, and variables | Received Nov 10, 2026 |
 | Prices for 3 banks (cross-check only) | yfinance (adjusted closes) | `code/02_download_prices.py` | See `data/provenance_log.csv` |
+| Q4 2022 FFIEC comparison file | FFIEC CDR Bulk Data, Call Reports -- Single Period | On the CDR page, select Call Reports -- Single Period, report date 12/31/2022, and Tab Delimited. Download the ZIP and save as `data/raw/ffiec_call_20221231.zip`. | Downloaded Nov 10, 2026 |
 
 `data/raw/` and `data/interim/` are git-ignored. The scripts recreate them, except the CRSP files, which are licensed and come from Prof. Bowen. **Licensing:** we publish only results computed from CRSP (BHARs, CARs, betas, regressions), never CRSP rows (daily returns, prices, shares outstanding). That includes anything the dashboard loads.
+
+### FDIC API vs. FFIEC check
+
+For four banks, all 24 comparisons of total assets, uninsured deposits, and the four securities fields matched exactly between the FDIC API and the FFIEC CDR Q4 2022 bulk snapshot. Amounts are in $ thousands.
+
+| Bank | Fields compared | Exact matches |
+|---|---|---:|
+| First Republic (FRC) | ASSET, DEPUNINS, SCHA, SCHF, SCAA, SCAF | 6 / 6 |
+| Silicon Valley Bank (SIVB) | ASSET, DEPUNINS, SCHA, SCHF, SCAA, SCAF | 6 / 6 |
+| Western Alliance (WAL) | ASSET, DEPUNINS, SCHA, SCHF, SCAA, SCAF | 6 / 6 |
+| Zions (ZION) | ASSET, DEPUNINS, SCHA, SCHF, SCAA, SCAF | 6 / 6 |
+
+The detailed bank-by-bank values are in [`outputs/ffiec_fdic_comparison.md`](outputs/ffiec_fdic_comparison.md). `code/06_hand_checks.py` reruns this comparison when the local FFIEC ZIP is present. Without the ZIP, the check is recorded as **SKIPPED** and the committed comparison in `outputs/ffiec_fdic_comparison.md` is left unchanged.
 
 ### Variables
 | Column | Definition |
@@ -76,7 +92,7 @@ Settings (event dates, windows, call report quarter, field list, delisting assum
 
 ### Threats to validity (so far)
 1. **Failed banks' missing delisting returns.** SVB and Signature stop trading on Mar 10 with no CRSP delisting return. We set it to −100% (shareholders were wiped out), which makes their BHAR about −96%. Dropping them instead (spec R3) cuts the uninsured-deposit coefficient by more than half (−0.15 to −0.06). See `specs_tried.md`.
-2. **Look-ahead in the data vintage:** the FDIC API serves the current version of Q4 2022 data, which may include amendments filed after March 2023. To do: compare a few banks with the FFIEC bulk files.
+2. **Look-ahead in the data vintage:** the FDIC API serves the current version of Q4 2022 data, which may include amendments filed after March 2023. All 24 fields checked for FRC, SIVB, WAL, and ZION matched the current FFIEC CDR Q4 2022 bulk snapshot exactly. The CDR bulk file is also a current snapshot, so this checks cross-source consistency rather than recovering original filing vintages.
 3. **Loss measure:** `EQCCOMPI` is an annual OCI flow, not accumulated AOCI; the diagnostic column is now `oci_2022_to_equity`. See [Morgan’s reconciliation](docs/zions_measurement.md). Losses on securities moved from AFS to HTM sit in equity (AOCI), not in the HTM gap (Zions shows a negative HTM loss). Securities-only measures also ignore losses on loans.
 4. **Custody banks:** State Street (101%), BNY Mellon (93%), and Citi (82%) have very high uninsured shares, but most of those deposits are operational accounts for institutional clients, which behave differently from a startup's payroll account. One ratio is slightly above 1 because the FDIC's uninsured estimate and domestic deposits are measured differently.
 5. **Outliers in ratios:** `sec_loss_to_equity` has a few extreme values (banks with thin equity). No winsorizing yet; any choice we make will be logged.
