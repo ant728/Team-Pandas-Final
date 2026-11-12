@@ -1,5 +1,7 @@
 # FIN 331 Final Project: Team Pandas
 
+**Live dashboard:** https://ant728.github.io/Team-Pandas-Final/app/
+
 **Team:** Andrew Temo (ant728), Mason Friedman (MasonF9897897), Morgan Waddell (mow228-boop), Ryan Carr (rcarr37)
 
 **Status:** v0 pipeline running on the full sample (323 banks) with CRSP returns. Next: Checkpoint 2 and `PROPOSAL.md` (Sat Nov 14). Our Checkpoint 1 memo is [`STATUS.md`](STATUS.md).
