@@ -1,5 +1,9 @@
 # FIN 331 Final Project: Team Pandas
 
+**[Open the live dashboard](https://ant728.github.io/Team-Pandas-Final/app/)**
+
+[Dashboard mockups and HW8 page guide](docs/mason_hw8.md)
+
 **Team:** Andrew Temo (ant728), Mason Friedman (MasonF9897897), Morgan Waddell (mow228-boop), Ryan Carr (rcarr37)
 
 **Status:** v0 pipeline running on the full sample (323 banks) with CRSP returns. Next: Checkpoint 2 and `PROPOSAL.md` (Sat Nov 14). Our Checkpoint 1 memo is [`STATUS.md`](STATUS.md).
@@ -24,6 +28,8 @@ Current outputs:
 - [`outputs/hand_checks.md`](outputs/hand_checks.md): independent recomputations, all passing
 
 ### Checkpoint 2 dashboard
+
+The dashboard is live on [GitHub Pages](https://ant728.github.io/Team-Pandas-Final/app/).
 
 From the repository root, run `python3 app/serve.py` and open
 `http://127.0.0.1:8765/app/`. The app reads the committed

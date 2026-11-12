@@ -18,3 +18,19 @@ current banks or report a validated failure prediction. The event scatter
 shows associations; it does not establish causality. The loss measure,
 data-vintage concerns, and sensitivity to assumed delisting returns remain
 documented under “Threats to validity” in the main README.
+
+## Mason Friedman — HW8 publication check
+
+Verified November 12, 2026. The dashboard is available on
+[GitHub Pages](https://ant728.github.io/Team-Pandas-Final/app/).
+All four pages loaded; the Intro counts, 323 chart points, two imputed
+delisting markers, historical table, sample filter, and ticker search
+matched the public dataset. No browser console errors or warnings were
+reported during those checks.
+
+The two proposal screenshots under `docs/images/` were preserved from
+PR #8 and inspected. Both load in GitHub's proposal preview, which also
+renders all five tables. The root README now links to the live app and
+the [HW8 page guide](../docs/mason_hw8.md). The guide records proposal
+integration and final-edit checks; it does not replace Mason's own
+proposal paragraph or the full team's skeptical review.

@@ -1,5 +1,8 @@
 # Checkpoint 2 dashboard
 
+View the [live dashboard](https://ant728.github.io/Team-Pandas-Final/app/).
+The [HW8 page guide and screenshots](../docs/mason_hw8.md) document what to show in the proposal.
+
 From the repository root, run:
 
 ```sh
