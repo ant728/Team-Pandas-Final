@@ -98,6 +98,17 @@ def main():
           f"IN SAMPLE: {final['in_sample'].sum()}")
     print("not matched to FDIC:", ", ".join(final.loc[~final["has_fdic"], "name"].str.title()))
 
+    # Range checks. These values are possible in the data but suspicious, so we list them on every run
+    # instead of hiding them. They are known, open issues (README threats 4, 5 and 8; audits/01_self_audit.md).
+    s = final[final["in_sample"]]
+    for col, limit, why in [("uninsured_dep_share", 1.0, "a share above 100%"),
+                            ("sec_loss_to_equity", 1.0, "securities losses larger than equity"),
+                            ("htm_loss_to_equity", 1.0, "HTM losses larger than equity")]:
+        out = s.loc[s[col] > limit, ["ticker", col]].sort_values(col, ascending=False)
+        if len(out):
+            print(f"RANGE WARNING, {why} ({col} > {limit:g}): "
+                  + ", ".join(f"{t} {v:.2f}" for t, v in out.itertuples(index=False)))
+
 
 if __name__ == "__main__":
     main()

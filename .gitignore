@@ -1,4 +1,4 @@
-# Raw data is recreated by the download code, so it stays out of git
+# Raw data stays out of git. The download code recreates everything except the licensed CRSP files (see README).
 data/raw/
 
 # Secrets: never commit API keys

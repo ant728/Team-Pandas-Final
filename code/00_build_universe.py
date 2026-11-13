@@ -11,7 +11,7 @@ Outputs:
 import pandas as pd
 import requests
 
-from config import CALL_REPORT_DATE, NYFED_LINK_URL, PROCESSED, RAW, REQUESTS
+from config import CALL_REPORT_DATE, NYFED_LINK_URL, NYFED_LINK_VINTAGE_END, PROCESSED, RAW, REQUESTS
 from provenance import log_download
 
 
@@ -30,7 +30,7 @@ def main():
     # One row = one listed entity. Both IDs must be unique, or a bank would be double counted.
     assert uni["rssd_id"].is_unique and uni["permco"].is_unique
     # Links that end after the call report date but before today mark banks that failed, merged, or delisted.
-    uni["link_ends_by_2024"] = uni["dt_end"] < 20240930
+    uni["link_ends_by_2024"] = uni["dt_end"] < NYFED_LINK_VINTAGE_END
 
     PROCESSED.mkdir(parents=True, exist_ok=True)
     REQUESTS.mkdir(parents=True, exist_ok=True)

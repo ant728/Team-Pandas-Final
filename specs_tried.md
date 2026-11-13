@@ -25,6 +25,8 @@ Every specification we run goes here, including the ones we drop. Count so far: 
 **Magnitude (R1):** a one-standard-deviation higher uninsured share (16 pp) goes with a 2.4 pp lower BHAR over the three days. The average bank's BHAR was −10.3%.
 
 ## Choices fixed before looking at returns
+One exception: the outcome definition itself (compounded BHAR rather than summed CAR) was chosen *after* seeing four banks' event returns in the proof of concept (#1–#3). The reason was mechanical (summing overstates large crashes), but it was not fixed blind.
+
 - Call report quarter: Q4 2022 (due Jan 30, 2023, public before the event).
 - Day 0: Mar 9, 2023 (SVB's announcement came after the close on Mar 8). Window: trading days 0 to +2.
 - Uninsured share denominator: domestic deposits (the uninsured estimate only covers domestic offices).
