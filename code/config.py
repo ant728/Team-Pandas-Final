@@ -30,7 +30,7 @@ FDIC_FIELDS = [
     "DEPLGAMT",  # amount in deposit accounts over $250,000 (all banks)
     "DEPLGB",    # number of deposit accounts over $250,000 (all banks)
     "EQTOT",     # total equity capital
-    "EQCCOMPI",  # accumulated other comprehensive income (after tax), for the Zions question
+    "EQCCOMPI",  # other comprehensive income flow (not accumulated AOCI), for the Zions question
     "SC",        # total securities (= SCHA + SCAF)
     "SCHA",      # held-to-maturity securities, amortized cost (book value)
     "SCHF",      # held-to-maturity securities, fair value

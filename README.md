@@ -33,6 +33,8 @@ From the repository root, run `python3 app/serve.py` and open
 install. The local server serves only the dashboard assets and this published
 CSV. See [dashboard instructions](app/README.md) for the data contract.
 
+[Proposal (HW8)](PROPOSAL.md) · [Zions measurement note](docs/zions_measurement.md) · [Self-audit](audits/01_self_audit.md)
+
 ### Pipeline
 | Step | Script | Reads | Writes |
 |---|---|---|---|
@@ -43,6 +45,7 @@ CSV. See [dashboard instructions](app/README.md) for the data contract.
 | 4 | `code/04_build_dataset.py` | steps 0, 1, 3 | `data/processed/bank_measures.csv`, `outputs/final_dataset.csv` |
 | 5 | `code/05_regressions.py` | `outputs/final_dataset.csv` | `outputs/regressions_v0.*`, `outputs/summary_stats.csv` |
 | 6 | `code/06_hand_checks.py` | raw files, outputs | `outputs/hand_checks.md` |
+| 7 | `code/07_zions_reconciliation.py` | sourced Zions disclosures and raw FDIC report | `outputs/zions_reconciliation.csv`, `outputs/zions_measure_comparison.csv` |
 
 Settings (event dates, windows, call report quarter, field list, delisting assumption) live in one place: `code/config.py`.
 
@@ -79,7 +82,7 @@ The detailed bank-by-bank values are in [`outputs/ffiec_fdic_comparison.md`](out
 | `uninsured_dep_share` | Uninsured domestic deposits / domestic deposits (`DEPUNINS / DEPDOM`, FDIC fields in $ thousands, summed across the entity's banks). For the ~50 banks without `DEPUNINS`: amount in accounts over $250K − $250K × number of those accounts |
 | `htm_loss_to_equity` | `(SCHA − SCHF) / EQTOT`: held-to-maturity loss not yet in book equity |
 | `sec_loss_to_equity` | `((SCHA − SCHF) + (SCAA − SCAF)) / EQTOT`: all securities losses |
-| `aoci_to_equity` | `EQCCOMPI / EQTOT`: accumulated other comprehensive income (after tax). For the Zions question; not used in the regressions yet |
+| `oci_2022_to_equity` | `EQCCOMPI / EQTOT`: 2022 other comprehensive income flow / equity (after tax); not accumulated AOCI and not a securities-only loss measure. Not used in the regressions |
 | `htm_share_of_securities` | `SCHA / (SCHA + SCAF)` |
 | `log_assets` | log of total assets (`ASSET`) |
 | `bhr_0_2` | Buy-and-hold return over trading days 0 to +2 (Mar 9, 10, 13, 2023), including the delisting return on the delisting date |
@@ -90,7 +93,7 @@ The detailed bank-by-bank values are in [`outputs/ffiec_fdic_comparison.md`](out
 ### Threats to validity (so far)
 1. **Failed banks' missing delisting returns.** SVB and Signature stop trading on Mar 10 with no CRSP delisting return. We set it to −100% (shareholders were wiped out), which makes their BHAR about −96%. Dropping them instead (spec R3) cuts the uninsured-deposit coefficient by more than half (−0.15 to −0.06). See `specs_tried.md`.
 2. **Look-ahead in the data vintage:** the FDIC API serves the current version of Q4 2022 data, which may include amendments filed after March 2023. All 24 fields checked for FRC, SIVB, WAL, and ZION matched the current FFIEC CDR Q4 2022 bulk snapshot exactly. The CDR bulk file is also a current snapshot, so this checks cross-source consistency rather than recovering original filing vintages.
-3. **Loss measure:** losses on securities moved from AFS to HTM sit in equity (AOCI), not in the HTM gap (Zions shows a negative HTM loss). Securities-only measures also ignore losses on loans.
+3. **Loss measure:** `EQCCOMPI` is an annual OCI flow, not accumulated AOCI; the diagnostic column is now `oci_2022_to_equity`. See [Morgan’s reconciliation](docs/zions_measurement.md). Losses on securities moved from AFS to HTM sit in equity (AOCI), not in the HTM gap (Zions shows a negative HTM loss). Securities-only measures also ignore losses on loans.
 4. **Custody banks:** State Street (101%), BNY Mellon (93%), and Citi (82%) have very high uninsured shares, but most of those deposits are operational accounts for institutional clients, which behave differently from a startup's payroll account. One ratio is slightly above 1 because the FDIC's uninsured estimate and domestic deposits are measured differently.
 5. **Outliers in ratios:** `sec_loss_to_equity` has a median of 0.21 but a maximum of 29.1 (First American), and 8 in-sample entities are above 1. No winsorizing yet; any choice we make will be logged in `specs_tried.md` before it is run. Step 4 prints these on every run.
 6. **Entities without FDIC data:** 16 of 343 don't match. 6 are non-banks, but 10 are real banks lost because their top-tier holder is an unlisted parent (see "Linking banks" above). They are left out of the regressions for now.

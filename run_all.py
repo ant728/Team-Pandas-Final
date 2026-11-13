@@ -12,6 +12,7 @@ STEPS = [
     "04_build_dataset.py",
     "05_regressions.py",
     "06_hand_checks.py",
+    "07_zions_reconciliation.py",
 ]
 
 for step in STEPS:
