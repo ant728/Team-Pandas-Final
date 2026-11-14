@@ -104,6 +104,15 @@ shows associations; it does not establish causality. The loss measure,
 data-vintage concerns, and sensitivity to assumed delisting returns remain
 documented under “Threats to validity” in the main README.
 
+### HW8 publication check
+
+Verified November 12, 2026. The dashboard is available on
+[GitHub Pages](https://ant728.github.io/Team-Pandas-Final/app/).
+All four pages loaded; the Intro counts, 323 chart points, two imputed
+delisting markers, historical table, sample filter, and ticker search
+matched the public dataset. No browser console errors or warnings were
+reported during those checks.
+
 
 ## Morgan Waddell — accounting additions
 
