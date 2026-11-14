@@ -1,0 +1,11 @@
+item,value_millions,report_date,public_date,source,location,note
+htm_cost,11126,2022-12-31,2023-02-23,https://www.sec.gov/Archives/edgar/data/109380/000010938023000074/zions-20221231.htm,Note 5 p95,Rounded millions
+htm_fair_value,11239,2022-12-31,2023-02-23,https://www.sec.gov/Archives/edgar/data/109380/000010938023000074/zions-20221231.htm,Note 5 p95,Rounded millions
+afs_cost,13538,2022-12-31,2023-02-23,https://www.sec.gov/Archives/edgar/data/109380/000010938023000074/zions-20221231.htm,Note 5 p95,Rounded millions
+afs_fair_value,11915,2022-12-31,2023-02-23,https://www.sec.gov/Archives/edgar/data/109380/000010938023000074/zions-20221231.htm,Note 5 p95,Rounded millions
+transfer_loss_pretax_approx,2400,2022-12-31,2023-02-23,https://www.sec.gov/Archives/edgar/data/109380/000010938023000074/zions-20221231.htm,Note 5 p95 footnote 1,Approximate disclosed transfer loss; not an exact remaining unamortized balance
+securities_aoci_aftertax,-2800,2022-12-31,2023-02-23,https://www.sec.gov/Archives/edgar/data/109380/000010938023000074/zions-20221231.htm,Note 14 AOCI table,Closing balance
+derivatives_other_aoci_aftertax,-311,2022-12-31,2023-02-23,https://www.sec.gov/Archives/edgar/data/109380/000010938023000074/zions-20221231.htm,Note 14 AOCI table,Closing balance
+pension_aoci_aftertax,-1,2022-12-31,2023-02-23,https://www.sec.gov/Archives/edgar/data/109380/000010938023000074/zions-20221231.htm,Note 14 AOCI table,Closing balance
+total_aoci_aftertax,-3112,2022-12-31,2023-02-23,https://www.sec.gov/Archives/edgar/data/109380/000010938023000074/zions-20221231.htm,Note 14 AOCI table,Closing balance
+oci_2022_flow_aftertax,-3032,2022-12-31,2023-02-23,https://www.sec.gov/Archives/edgar/data/109380/000010938023000074/zions-20221231.htm,Note 14 AOCI table,Annual change; not closing accumulated balance

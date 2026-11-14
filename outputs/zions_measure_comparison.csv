@@ -1,0 +1,5 @@
+measure,value,note
+HTM gap / equity,-0.02309186126328012,Rounded 10-K gap / FDIC equity
+HTM + AFS gaps / equity,0.30857265935887596,Rounded 10-K gaps / FDIC equity
+Transfer-adjusted / equity (approximate diagnostic),0.7990192702604006,Approximate disclosed transfer loss; not exact remaining year-end balance
+2022 OCI flow / equity,-0.6196047041186684,"Flow, not accumulated AOCI; not a securities-only loss measure"

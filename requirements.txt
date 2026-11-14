@@ -1,5 +1,6 @@
-pandas>=2.2
-numpy>=1.26
-requests>=2.32
-yfinance>=1.7
-statsmodels>=0.14
+# Versions used to build the committed outputs (Python 3.12). Pinned so a fresh install matches.
+pandas==2.2.2
+numpy==1.26.4
+requests==2.32.3
+yfinance==1.7.0
+statsmodels==0.14.2

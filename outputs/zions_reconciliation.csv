@@ -1,0 +1,13 @@
+item,value_millions,report_date,public_date,source,location,note,fdic_value_millions,difference_millions
+htm_cost,11126.0,2022-12-31,2023-02-23,https://www.sec.gov/Archives/edgar/data/109380/000010938023000074/zions-20221231.htm,Note 5 p95,Rounded millions,11125.459,-0.5409999999992579
+htm_fair_value,11239.0,2022-12-31,2023-02-23,https://www.sec.gov/Archives/edgar/data/109380/000010938023000074/zions-20221231.htm,Note 5 p95,Rounded millions,11238.585,-0.4150000000008731
+afs_cost,13538.0,2022-12-31,2023-02-23,https://www.sec.gov/Archives/edgar/data/109380/000010938023000074/zions-20221231.htm,Note 5 p95,Rounded millions,13538.167,0.16699999999946158
+afs_fair_value,11915.0,2022-12-31,2023-02-23,https://www.sec.gov/Archives/edgar/data/109380/000010938023000074/zions-20221231.htm,Note 5 p95,Rounded millions,11914.977,-0.02299999999922875
+transfer_loss_pretax_approx,2400.0,2022-12-31,2023-02-23,https://www.sec.gov/Archives/edgar/data/109380/000010938023000074/zions-20221231.htm,Note 5 p95 footnote 1,Approximate disclosed transfer loss; not an exact remaining unamortized balance,,
+securities_aoci_aftertax,-2800.0,2022-12-31,2023-02-23,https://www.sec.gov/Archives/edgar/data/109380/000010938023000074/zions-20221231.htm,Note 14 AOCI table,Closing balance,,
+derivatives_other_aoci_aftertax,-311.0,2022-12-31,2023-02-23,https://www.sec.gov/Archives/edgar/data/109380/000010938023000074/zions-20221231.htm,Note 14 AOCI table,Closing balance,,
+pension_aoci_aftertax,-1.0,2022-12-31,2023-02-23,https://www.sec.gov/Archives/edgar/data/109380/000010938023000074/zions-20221231.htm,Note 14 AOCI table,Closing balance,,
+total_aoci_aftertax,-3112.0,2022-12-31,2023-02-23,https://www.sec.gov/Archives/edgar/data/109380/000010938023000074/zions-20221231.htm,Note 14 AOCI table,Closing balance,,
+oci_2022_flow_aftertax,-3032.0,2022-12-31,2023-02-23,https://www.sec.gov/Archives/edgar/data/109380/000010938023000074/zions-20221231.htm,Note 14 AOCI table,Annual change; not closing accumulated balance,-3032.035,-0.03499999999985448
+fdic_equity,4893.499,,,FDIC BankFind financials,CERT 2270; EQTOT; 20221231,Denominator; millions of dollars,,
+fdic_oci_2022_flow,-3032.035,,,FDIC BankFind financials,CERT 2270; EQCCOMPI; 20221231,Other comprehensive income flow; not accumulated AOCI,,

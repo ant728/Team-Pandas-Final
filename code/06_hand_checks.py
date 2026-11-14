@@ -4,6 +4,7 @@ Writes outputs/hand_checks.md and raises if any check fails.
 """
 import csv
 
+import numpy as np
 import pandas as pd
 
 from config import CALL_REPORT_DATE, CRSP_DAILY, CRSP_MARKET, INSURANCE_LIMIT_THOUSANDS, OUTPUTS, RAW
@@ -16,6 +17,18 @@ results = []
 def check(name, ours, theirs, tol, source):
     ok = abs(ours - theirs) <= tol
     results.append((name, ours, theirs, tol, "PASS" if ok else "FAIL", source))
+
+
+def skip(name, reason):
+    results.append((name, None, None, None, "SKIPPED", reason))
+
+
+# --- Step 0: universe size, recounted from the raw NY Fed link with a plain loop -------------
+d = int(CALL_REPORT_DATE)
+with open(RAW / "nyfed_crsp_frb_link.csv", newline="") as f:
+    n_active = sum(1 for r in csv.DictReader(f) if int(r["dt_start"]) <= d <= int(r["dt_end"]))
+check(f"Entities in the NY Fed link on {CALL_REPORT_DATE}, counted by hand", len(final), n_active, 0,
+      "raw nyfed_crsp_frb_link.csv rows with dt_start <= date <= dt_end")
 
 
 # --- Call report measures vs. published SVB figures -----------------------------------------
@@ -39,11 +52,17 @@ check(f"Over-$250K approximation vs. reported uninsured share: correlation acros
       corr, 1.0, 0.2, "banks that file both (we use the approximation only for banks that don't report)")
 
 # --- CRSP returns vs. yfinance, Mar 8 close to Mar 13 close (raw, not abnormal) ---------------
-px = pd.read_csv(RAW / "prices_check.csv", parse_dates=["date"]).pivot(index="date", columns="symbol", values="close")
+prices = RAW / "prices_check.csv"
+px = (pd.read_csv(prices, parse_dates=["date"]).pivot(index="date", columns="symbol", values="close")
+      if prices.exists() else pd.DataFrame())
 for t in ["JPM", "WAL", "ZION"]:
-    yf_bhr = px.at[pd.Timestamp("2023-03-13"), t] / px.at[pd.Timestamp("2023-03-08"), t] - 1
-    check(f"{t} 3-day buy-and-hold return: CRSP vs. yfinance", final.at[t, "bhr_0_2"], yf_bhr, 0.005,
-          "yfinance adjusted closes (independent source)")
+    name = f"{t} 3-day buy-and-hold return: CRSP vs. yfinance"
+    try:
+        yf_bhr = px.at[pd.Timestamp("2023-03-13"), t] / px.at[pd.Timestamp("2023-03-08"), t] - 1
+    except KeyError:  # step 2 could not download this symbol (yfinance is optional)
+        skip(name, "yfinance prices not available on this run (see step 2 warnings)")
+        continue
+    check(name, final.at[t, "bhr_0_2"], yf_bhr, 0.005, "yfinance adjusted closes (independent source)")
 
 # --- WAL's BHAR recomputed from the raw CRSP rows with a plain loop --------------------------
 days = ["2023-03-09", "2023-03-10", "2023-03-13"]
@@ -63,6 +82,23 @@ check("WAL BHAR[0,+2], recomputed from raw CRSP rows", final.at["WAL", "bhar_0_2
 check("SVB buy-and-hold return with -100% delisting return", final.at["SIVB", "bhr_0_2"], -1.0, 1e-9,
       "our assumption for the missing delisting return (config.MISSING_DLRET_FAILED)")
 
+# --- Step 5: R1 recomputed with plain numpy (OLS by least squares, HC3 by the sandwich formula) --
+s = final[final["in_sample"]]
+X = np.column_stack([np.ones(len(s)), s["uninsured_dep_share"], s["htm_loss_to_equity"], s["log_assets"]])
+y = s["bhar_0_2"].to_numpy()
+b = np.linalg.lstsq(X, y, rcond=None)[0]
+e = y - X @ b
+XtX_inv = np.linalg.inv(X.T @ X)
+h = np.einsum("ij,jk,ik->i", X, XtX_inv, X)           # leverage of each bank
+meat = X.T @ (X * (e ** 2 / (1 - h) ** 2)[:, None])
+se_hc3 = np.sqrt(np.diag(XtX_inv @ meat @ XtX_inv))
+reg = pd.read_csv(OUTPUTS / "regressions_v0.csv")
+r1 = reg[reg["spec"].str.startswith("R1") & reg["variable"].eq("uninsured_dep_share")].iloc[0]
+check("R1 uninsured-share coefficient, recomputed with numpy", r1["coef"], b[1], 1e-5,
+      "numpy least squares on outputs/final_dataset.csv (in-sample rows)")
+check("R1 uninsured-share HC3 standard error, recomputed by hand", r1["se"], se_hc3[1], 1e-5,
+      "HC3 sandwich formula in numpy: (X'X)^-1 X' diag(e^2/(1-h)^2) X (X'X)^-1")
+
 # --- FDIC API values vs. the FFIEC CDR Q4 2022 bulk file -------------------------------------
 if FFIEC_ZIP.exists():
     ffiec = comparison_table()
@@ -72,8 +108,9 @@ if FFIEC_ZIP.exists():
               f"FFIEC CERT(s) {row.certs}; {row.bank_reports}")
     write_ffiec_report(ffiec)
 else:
-    results.append(("FDIC API vs. FFIEC CDR Q4 2022 comparison", None, None, None,
-                    "SKIPPED", f"Local input not present: {FFIEC_ZIP.relative_to(RAW.parent.parent)}"))
+    skip("FDIC API vs. FFIEC CDR Q4 2022 comparison",
+         f"Local input not present: {FFIEC_ZIP.relative_to(RAW.parent.parent).as_posix()} "
+         "(manual download, see README provenance); last result in outputs/ffiec_fdic_comparison.md")
 
 # --- Write report ------------------------------------------------------------------------------
 lines = ["# Hand checks", "",

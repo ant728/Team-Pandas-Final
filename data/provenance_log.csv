@@ -3,4 +3,16 @@ data/raw/nyfed_crsp_frb_link.csv,https://www.newyorkfed.org/medialibrary/media/r
 data/raw/fdic_financials_20221231.csv,https://api.fdic.gov/banks/financials,2026-11-10T22:23:20Z,risview_20260819185831,"all banks, REPDTE=20221231"
 data/raw/fdic_institutions.csv,https://api.fdic.gov/banks/institutions,2026-11-10T22:23:25Z,institutions_20261106100008,"CERT -> FED_RSSD, active and inactive banks"
 data/raw/prices_check.csv,yfinance Ticker.history(auto_adjust=True),2026-11-10T22:23:29Z,yfinance 1.7.0,cross-check only; 2023-03-01 to 2023-03-20
+data/raw/nyfed_crsp_frb_link.csv,https://www.newyorkfed.org/medialibrary/media/research/banking_research/data/crsp_20240930v2.csv,2026-11-10T23:04:28Z,crsp_20240930v2,RSSD -> PERMCO link with date ranges
+data/raw/fdic_financials_20221231.csv,https://api.fdic.gov/banks/financials,2026-11-10T23:04:34Z,risview_20260819185831,"all banks, REPDTE=20221231"
+data/raw/fdic_institutions.csv,https://api.fdic.gov/banks/institutions,2026-11-10T23:04:41Z,institutions_20261106100008,"CERT -> FED_RSSD, active and inactive banks"
+data/raw/prices_check.csv,yfinance Ticker.history(auto_adjust=True),2026-11-10T23:04:46Z,yfinance 1.8.0,cross-check only; 2023-03-01 to 2023-03-20
 data/raw/ffiec_call_20221231.zip,https://cdr.ffiec.gov/public/PWS/DownloadBulkData.aspx,2026-11-10T22:34:29Z,FFIEC CDR current Q4 2022 snapshot,"Report date=20221231; Tab Delimited; downloaded by selecting Call Reports -- Single Period, 12/31/2022, Tab Delimited; saved to data/raw/ffiec_call_20221231.zip"
+data/raw/nyfed_crsp_frb_link.csv,https://www.newyorkfed.org/medialibrary/media/research/banking_research/data/crsp_20240930v2.csv,2026-11-12T20:27:50Z,crsp_20240930v2,RSSD -> PERMCO link with date ranges
+data/raw/fdic_financials_20221231.csv,https://api.fdic.gov/banks/financials,2026-11-12T20:27:55Z,risview_20260819185831,"all banks, REPDTE=20221231"
+data/raw/fdic_institutions.csv,https://api.fdic.gov/banks/institutions,2026-11-12T20:28:00Z,institutions_20261106100008,"CERT -> FED_RSSD, active and inactive banks"
+data/raw/prices_check.csv,yfinance Ticker.history(auto_adjust=True),2026-11-12T20:28:03Z,yfinance 1.7.0,cross-check only; 2023-03-01 to 2023-03-20
+data/raw/nyfed_crsp_frb_link.csv,https://www.newyorkfed.org/medialibrary/media/research/banking_research/data/crsp_20240930v2.csv,2026-11-12T22:32:06Z,crsp_20240930v2,RSSD -> PERMCO link with date ranges
+data/raw/fdic_financials_20221231.csv,https://api.fdic.gov/banks/financials,2026-11-12T22:32:12Z,risview_20260819185831,"all banks, REPDTE=20221231"
+data/raw/fdic_institutions.csv,https://api.fdic.gov/banks/institutions,2026-11-12T22:32:17Z,institutions_20261106100008,"CERT -> FED_RSSD, active and inactive banks"
+data/raw/prices_check.csv,yfinance Ticker.history(auto_adjust=True),2026-11-12T22:32:35Z,yfinance 1.8.0,cross-check only; 2023-03-01 to 2023-03-20

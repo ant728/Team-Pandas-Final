@@ -13,17 +13,17 @@
 **One row of the final dataset = one listed bank entity**: the holding company, or the bank itself if it has none. Each row has the entity's Q4 2022 call report measures and its stock's abnormal return over Mar 9–13, 2023. Key: `rssd_id` (also unique on `permco`; both asserted). The sample is every entity in the NY Fed CRSP–FRB link on Dec 31, 2022 (343), including banks that later failed or merged.
 
 ### How to run
-1. `pip install -r requirements.txt`
+1. `pip install -r requirements.txt` (Python 3.12; package versions are pinned to the ones that built the committed outputs)
 2. Put the four CRSP files in `data/raw/crsp/`: `crsp_daily_2022_2023.csv`, `crsp_market_vwretd.csv`, `crsp_delistings.csv`, `crsp_permcos.csv`. They are **licensed (Lehigh users only)** and not in the repo. Get them from the Google Drive folder Prof. Bowen shared with the team.
 3. `python run_all.py`
 
-`run_all.py` downloads everything else, builds the dataset, runs the regressions, and runs the hand checks. It stops if any check fails.
+`run_all.py` downloads everything else, builds the dataset, runs the regressions, and runs the hand checks. It stops if any check fails. If yfinance (used only for a cross-check) is down, the run continues and those checks are marked SKIPPED.
 
 Current outputs:
 - [`outputs/final_dataset.csv`](outputs/final_dataset.csv): all 343 entities, with flags for why any are out of the sample
 - [`outputs/regressions_v0.md`](outputs/regressions_v0.md): the first cross-sectional regressions
 - [`outputs/summary_stats.csv`](outputs/summary_stats.csv): descriptive statistics
-- [`outputs/hand_checks.md`](outputs/hand_checks.md): independent recomputations, all passing
+- [`outputs/hand_checks.md`](outputs/hand_checks.md): independent recomputations, at least one for every step, all passing
 
 ### Checkpoint 2 dashboard
 
@@ -32,6 +32,8 @@ From the repository root, run `python3 app/serve.py` and open
 [`outputs/final_dataset.csv`](outputs/final_dataset.csv) and requires no package
 install. The local server serves only the dashboard assets and this published
 CSV. See [dashboard instructions](app/README.md) for the data contract.
+
+[Proposal (HW8)](PROPOSAL.md) · [Zions measurement note](docs/zions_measurement.md) · [Self-audit](audits/01_self_audit.md)
 
 ### Pipeline
 | Step | Script | Reads | Writes |
@@ -43,10 +45,11 @@ CSV. See [dashboard instructions](app/README.md) for the data contract.
 | 4 | `code/04_build_dataset.py` | steps 0, 1, 3 | `data/processed/bank_measures.csv`, `outputs/final_dataset.csv` |
 | 5 | `code/05_regressions.py` | `outputs/final_dataset.csv` | `outputs/regressions_v0.*`, `outputs/summary_stats.csv` |
 | 6 | `code/06_hand_checks.py` | raw files, outputs | `outputs/hand_checks.md` |
+| 7 | `code/07_zions_reconciliation.py` | sourced Zions disclosures and raw FDIC report | `outputs/zions_reconciliation.csv`, `outputs/zions_measure_comparison.csv` |
 
 Settings (event dates, windows, call report quarter, field list, delisting assumption) live in one place: `code/config.py`.
 
-**Linking banks to listed entities (step 4).** Every FDIC-insured bank is assigned to a sample entity: to its holding company, if the holding company on the Q4 2022 report is in the sample, or to itself, if the bank itself is listed (e.g. First Republic, Signature, Zions). Call report fields are summed across each entity's banks. 327 of 343 entities match. The 16 that don't are mostly non-banks that own a thrift (AIG, MetLife, T. Rowe Price, Franklin, SEI, Impac) plus a few holding companies whose banks report under a different parent ID. They are listed in step 4's output and flagged `has_fdic = False`.
+**Linking banks to listed entities (step 4).** Every FDIC-insured bank is assigned to a sample entity: to its holding company, if the holding company on the Q4 2022 report is in the sample, or to itself, if the bank itself is listed (e.g. First Republic, Signature, Zions). Call report fields are summed across each entity's banks. 327 of 343 entities match. Of the 16 that don't, 6 are non-banks that own a thrift (AIG, MetLife, T. Rowe Price, Franklin, SEI, Impac) and **10 are real banks** (Hilltop, Amalgamated, First Guaranty, Greene County, Lake Shore, TFS, Kentucky First, Broadway, South Plains, Sterling). Their banks' top-tier holder (`RSSDHCR`) is an unlisted parent above the listed company, such as a mutual holding company or a controlling LLC, so the bank never maps to the listed entity. This is an open issue (threat 6). All 16 are flagged `has_fdic = False` in step 4's output.
 
 ### Data provenance
 | Input | Source | How we get it again | Pulled |
@@ -54,7 +57,7 @@ Settings (event dates, windows, call report quarter, field list, delisting assum
 | Sample universe (bank ↔ CRSP link) | NY Fed CRSP–FRB link, Sep 30, 2024 vintage ([page](https://www.newyorkfed.org/research/banking_research/crsp-frb)) | `code/00_build_universe.py` | See `data/provenance_log.csv` |
 | Call report fields, Q4 2022, all banks | FDIC BankFind API, `https://api.fdic.gov/banks/financials` ([field definitions](https://api.fdic.gov/banks/docs/risview_properties.yaml)) | `code/01_download_fdic.py` | See `data/provenance_log.csv` (logs the API's data vintage too) |
 | Bank IDs (CERT → RSSD) | FDIC BankFind API, `https://api.fdic.gov/banks/institutions` | `code/01_download_fdic.py` | See `data/provenance_log.csv` |
-| CRSP daily returns, delistings, market return | Pulled by Prof. Bowen from WRDS (legacy CRSP daily: `dsf`, `dsenames`, `dsedelist`, `dsi`) on 2026-11-06, at our request: the 343 PERMCOs in `requests/crsp_permcos.csv`, Jan 2022–Dec 2023; variables RET, RETX, DLRET/DLSTCD (delisting), PRC, SHROUT, VOL, TICKER, COMNAM, SHRCD, EXCHCD, and VWRETD (market) | Can't be re-downloaded without CRSP access; request the same PERMCOs, dates, and variables | Received Nov 10, 2026 |
+| CRSP daily returns, delistings, market return | Pulled by Prof. Bowen from WRDS (legacy CRSP daily: `dsf`, `dsenames`, `dsedelist`, `dsi`) on 2026-11-06, at our request: the 343 PERMCOs in `requests/crsp_permcos.csv`, Jan 2022–Dec 2023; variables RET, RETX, DLRET/DLSTCD (delisting), PRC, SHROUT, VOL, TICKER, COMNAM, SHRCD, EXCHCD, and VWRETD (market) | With WRDS access, run [`code/wrds/pull_crsp.do`](code/wrds/pull_crsp.do) (the Stata script used for the pull) next to `requests/crsp_permcos.csv` | Received Nov 10, 2026 |
 | Prices for 3 banks (cross-check only) | yfinance (adjusted closes) | `code/02_download_prices.py` | See `data/provenance_log.csv` |
 | Q4 2022 FFIEC comparison file | FFIEC CDR Bulk Data, Call Reports -- Single Period | On the CDR page, select Call Reports -- Single Period, report date 12/31/2022, and Tab Delimited. Download the ZIP and save as `data/raw/ffiec_call_20221231.zip`. | Downloaded Nov 10, 2026 |
 
@@ -79,7 +82,7 @@ The detailed bank-by-bank values are in [`outputs/ffiec_fdic_comparison.md`](out
 | `uninsured_dep_share` | Uninsured domestic deposits / domestic deposits (`DEPUNINS / DEPDOM`, FDIC fields in $ thousands, summed across the entity's banks). For the ~50 banks without `DEPUNINS`: amount in accounts over $250K − $250K × number of those accounts |
 | `htm_loss_to_equity` | `(SCHA − SCHF) / EQTOT`: held-to-maturity loss not yet in book equity |
 | `sec_loss_to_equity` | `((SCHA − SCHF) + (SCAA − SCAF)) / EQTOT`: all securities losses |
-| `aoci_to_equity` | `EQCCOMPI / EQTOT`: accumulated other comprehensive income (after tax). For the Zions question; not used in the regressions yet |
+| `oci_2022_to_equity` | `EQCCOMPI / EQTOT`: 2022 other comprehensive income flow / equity (after tax); not accumulated AOCI and not a securities-only loss measure. Not used in the regressions |
 | `htm_share_of_securities` | `SCHA / (SCHA + SCAF)` |
 | `log_assets` | log of total assets (`ASSET`) |
 | `bhr_0_2` | Buy-and-hold return over trading days 0 to +2 (Mar 9, 10, 13, 2023), including the delisting return on the delisting date |
@@ -90,11 +93,15 @@ The detailed bank-by-bank values are in [`outputs/ffiec_fdic_comparison.md`](out
 ### Threats to validity (so far)
 1. **Failed banks' missing delisting returns.** SVB and Signature stop trading on Mar 10 with no CRSP delisting return. We set it to −100% (shareholders were wiped out), which makes their BHAR about −96%. Dropping them instead (spec R3) cuts the uninsured-deposit coefficient by more than half (−0.15 to −0.06). See `specs_tried.md`.
 2. **Look-ahead in the data vintage:** the FDIC API serves the current version of Q4 2022 data, which may include amendments filed after March 2023. All 24 fields checked for FRC, SIVB, WAL, and ZION matched the current FFIEC CDR Q4 2022 bulk snapshot exactly. The CDR bulk file is also a current snapshot, so this checks cross-source consistency rather than recovering original filing vintages.
-3. **Loss measure:** losses on securities moved from AFS to HTM sit in equity (AOCI), not in the HTM gap (Zions shows a negative HTM loss). Securities-only measures also ignore losses on loans.
+3. **Loss measure:** `EQCCOMPI` is an annual OCI flow, not accumulated AOCI; the diagnostic column is now `oci_2022_to_equity`. See [Morgan’s reconciliation](docs/zions_measurement.md). Losses on securities moved from AFS to HTM sit in equity (AOCI), not in the HTM gap (Zions shows a negative HTM loss). Securities-only measures also ignore losses on loans.
 4. **Custody banks:** State Street (101%), BNY Mellon (93%), and Citi (82%) have very high uninsured shares, but most of those deposits are operational accounts for institutional clients, which behave differently from a startup's payroll account. One ratio is slightly above 1 because the FDIC's uninsured estimate and domestic deposits are measured differently.
-5. **Outliers in ratios:** `sec_loss_to_equity` has a few extreme values (banks with thin equity). No winsorizing yet; any choice we make will be logged.
-6. **Entities without FDIC data:** 16 of 343 don't match (mostly non-banks). A few real bank holding companies are lost to ID mismatches.
+5. **Outliers in ratios:** `sec_loss_to_equity` has a median of 0.21 but a maximum of 29.1 (First American), and 8 in-sample entities are above 1. No winsorizing yet; any choice we make will be logged in `specs_tried.md` before it is run. Step 4 prints these on every run.
+6. **Entities without FDIC data:** 16 of 343 don't match. 6 are non-banks, but 10 are real banks lost because their top-tier holder is an unlisted parent (see "Linking banks" above). They are left out of the regressions for now.
 7. **Small, illiquid banks** have noisy returns; 2,247 CRSP rows use a bid/ask midpoint instead of a closing price.
+8. **Bank-level measures, company-level returns.** Our measures come from the call reports of each entity's *bank subsidiaries*, but the outcome is the stock return of the *whole listed company*. For firms where the bank is a small part of the business (Schwab, Ameriprise, First American, Goldman Sachs, Morgan Stanley, AmEx, Raymond James, Stifel, Synchrony, Discover, Ally, SoFi, LendingClub), the ratio does not describe what the stock is pricing.
+9. **The window includes the rescue.** Day +2 (Mar 13) comes after the Sunday, Mar 12 announcement that all SVB and Signature depositors would be protected and that banks could borrow against their bonds at par (BTFP). That policy targets both of our explanatory variables, so the three-day return measures the panic *net of* the rescue.
+10. **Standard errors.** All banks share the same three trading days, so their abnormal returns are correlated beyond the market (a regional-bank factor). HC3 standard errors do not correct for that, so our p-values are probably too small.
+11. **Pre-tax losses vs. after-tax equity.** HTM losses are pre-tax while `EQTOT` is after-tax, and in `sec_loss_to_equity` the AFS losses have already reduced `EQTOT` through AOCI.
 
 ---
 
@@ -309,7 +316,7 @@ STATUS.md            # Checkpoint 1 memo
 specs_tried.md       # every specification we run
 run_all.py           # rebuilds everything from raw inputs
 requirements.txt
-code/                # config.py, 00_build_universe ... 06_hand_checks (see Pipeline)
+code/                # config.py, 00_build_universe ... 06_hand_checks (see Pipeline); wrds/pull_crsp.do (the CRSP pull)
 requests/            # the PERMCO list we sent for the CRSP pull
 data/raw/            # git-ignored; recreated by the download code (CRSP files come from a teammate)
 data/interim/        # git-ignored; row-level CRSP event-day returns

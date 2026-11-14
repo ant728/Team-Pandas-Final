@@ -65,6 +65,10 @@ def main():
     evt = d[d["date"].isin(evt_days)].copy()
     evt["rel_day"] = evt["date"].map({dt: i + EVENT_WINDOW[0] for i, dt in enumerate(evt_days)})
     evt["mkt_ret"] = evt["date"].map(mkt)
+    # A missing daily return would silently count as 0% in the product below, so stop instead.
+    # (Days after a delisting have no row at all, which correctly means the holder has cash.)
+    missing = evt[evt["r"].isna()]
+    assert missing.empty, f"missing event-window returns: {missing[['permno', 'ticker', 'date']].to_dict('records')}"
 
     rows = []
     for permno, g in evt.groupby("permno"):
