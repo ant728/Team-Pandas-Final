@@ -4,7 +4,7 @@
 
 **Status:** Partially addressed; the economic main-sample decision remains open.
 
-This responds to A2 in the [instructor audit, PR #14](https://github.com/ant728/Team-Pandas-Final/pull/14), tracked in [issue #15](https://github.com/ant728/Team-Pandas-Final/issues/15). The instructor audit file is not yet on `main`; PR #14 is the review reference. This response covers the dashboard disclosure and regression comparison only. It does not mark A2 fully fixed or close issue #15, and it makes no completion claim for A1, A3, or A4.
+This responds to A2 in the [instructor audit](02_instructor_audit.md), introduced in [PR #14](https://github.com/ant728/Team-Pandas-Final/pull/14) and tracked in [issue #15](https://github.com/ant728/Team-Pandas-Final/issues/15). This response covers the dashboard disclosure and regression comparison only. It does not mark A2 fully fixed or close issue #15, and it makes no completion claim for A1, A3, or A4.
 
 ## What this PR changes
 
