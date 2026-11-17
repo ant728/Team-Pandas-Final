@@ -4,7 +4,7 @@
 
 **Team:** Andrew Temo (ant728), Mason Friedman (MasonF9897897), Morgan Waddell (mow228-boop), Ryan Carr (rcarr37)
 
-**Status:** v0 pipeline running on the full sample (323 banks) with CRSP returns. Next: Checkpoint 2 and `PROPOSAL.md` (Sat Nov 14). Our Checkpoint 1 memo is [`STATUS.md`](STATUS.md).
+**Status:** v0 pipeline running on the full sample (333 banks) with CRSP returns. Instructor audit: [`audits/02_instructor_audit.md`](audits/02_instructor_audit.md). Next: Checkpoint 3 (Sat Nov 21). Our Checkpoint 1 memo is [`STATUS.md`](STATUS.md).
 
 ## Our project: bank fragility (Seed 6)
 
@@ -15,9 +15,10 @@
 ### How to run
 1. `pip install -r requirements.txt` (Python 3.12; package versions are pinned to the ones that built the committed outputs)
 2. Put the four CRSP files in `data/raw/crsp/`: `crsp_daily_2022_2023.csv`, `crsp_market_vwretd.csv`, `crsp_delistings.csv`, `crsp_permcos.csv`. They are **licensed (Lehigh users only)** and not in the repo. Get them from the Google Drive folder Prof. Bowen shared with the team.
-3. `python run_all.py`
+3. Download the FFIEC NIC **Relationships** file (CSV) from the [NIC data download page](https://www.ffiec.gov/npw/FinancialReport/DataDownload) and save the ZIP in `data/raw/nic/`. It's public, but the site blocks scripts with a CAPTCHA, so this is a manual step.
+4. `python run_all.py`
 
-`run_all.py` downloads everything else, builds the dataset, runs the regressions, and runs the hand checks. It stops if any check fails. If yfinance (used only for a cross-check) is down, the run continues and those checks are marked SKIPPED.
+`run_all.py` downloads everything else, builds the dataset, runs the regressions, and runs the hand checks. It stops if any check fails. If yfinance can't deliver the three cross-check banks, the run continues and those checks are marked SKIPPED. KRE (the regional-bank ETF used for `kre_beta`) is required: step 2 retries it, then stops if it still fails.
 
 Current outputs:
 - [`outputs/final_dataset.csv`](outputs/final_dataset.csv): all 343 entities, with flags for why any are out of the sample
@@ -40,16 +41,18 @@ CSV. See [dashboard instructions](app/README.md) for the data contract.
 |---|---|---|---|
 | 0 | `code/00_build_universe.py` | NY Fed CRSP–FRB link | `data/processed/universe_20221231.csv` (one row per entity), `requests/crsp_permcos.csv` |
 | 1 | `code/01_download_fdic.py` | FDIC API | `data/raw/fdic_financials_20221231.csv` (one row per bank), `data/raw/fdic_institutions.csv` |
-| 2 | `code/02_download_prices.py` | yfinance | `data/raw/prices_check.csv` (3 banks, cross-check only) |
-| 3 | `code/03_crsp_returns.py` | `data/raw/crsp/` | `data/processed/bank_returns.csv` (one row per bank: BHAR, CAR, beta), `data/interim/crsp_event_days.csv` (git-ignored) |
-| 4 | `code/04_build_dataset.py` | steps 0, 1, 3 | `data/processed/bank_measures.csv`, `outputs/final_dataset.csv` |
+| 2 | `code/02_download_prices.py` | yfinance | `data/raw/kre_daily.csv` (KRE, for `kre_beta`), `data/raw/prices_check.csv` (3 banks, cross-check only) |
+| 3 | `code/03_crsp_returns.py` | `data/raw/crsp/`, KRE | `data/processed/bank_returns.csv` (one row per bank: BHAR, CAR, market beta, KRE beta), `data/interim/crsp_event_days.csv` (git-ignored) |
+| 4 | `code/04_build_dataset.py` | steps 0, 1, 3, NIC relationships | `data/processed/bank_measures.csv`, `outputs/final_dataset.csv` |
 | 5 | `code/05_regressions.py` | `outputs/final_dataset.csv` | `outputs/regressions_v0.*`, `outputs/summary_stats.csv` |
 | 6 | `code/06_hand_checks.py` | raw files, outputs | `outputs/hand_checks.md` |
 | 7 | `code/07_zions_reconciliation.py` | sourced Zions disclosures and raw FDIC report | `outputs/zions_reconciliation.csv`, `outputs/zions_measure_comparison.csv` |
 
 Settings (event dates, windows, call report quarter, field list, delisting assumption) live in one place: `code/config.py`.
 
-**Linking banks to listed entities (step 4).** Every FDIC-insured bank is assigned to a sample entity: to its holding company, if the holding company on the Q4 2022 report is in the sample, or to itself, if the bank itself is listed (e.g. First Republic, Signature, Zions). Call report fields are summed across each entity's banks. 327 of 343 entities match. Of the 16 that don't, 6 are non-banks that own a thrift (AIG, MetLife, T. Rowe Price, Franklin, SEI, Impac) and **10 are real banks** (Hilltop, Amalgamated, First Guaranty, Greene County, Lake Shore, TFS, Kentucky First, Broadway, South Plains, Sterling). Their banks' top-tier holder (`RSSDHCR`) is an unlisted parent above the listed company, such as a mutual holding company or a controlling LLC, so the bank never maps to the listed entity. This is an open issue (threat 6). All 16 are flagged `has_fdic = False` in step 4's output.
+**Linking banks to listed entities (step 4).** Every FDIC-insured bank is assigned to a sample entity: to itself, if the bank itself is listed (e.g. First Republic, Signature, Zions), or otherwise to the *highest listed company that controls it* on Dec 31, 2022, found by walking up the FFIEC NIC relationships file (specs_tried.md #13). A bank controlled by another insured bank is left out of the sums, because its parent bank's consolidated call report already includes it (#15). Call report fields are summed across each entity's banks.
+
+**Match rate: 337 of 343 entities (98%).** Our first rule used only each bank's top-tier holder (`RSSDHCR`) and matched 327. It missed **10 real banks** (Hilltop, Amalgamated, First Guaranty, Greene County, Lake Shore, TFS, Kentucky First, Broadway, South Plains, Sterling) whose top-tier holder is an unlisted parent above the listed company, such as a mutual holding company. The NIC walk matches all 10 (instructor audit A4). The 6 still unmatched are non-banks that own a thrift (AIG, MetLife, T. Rowe Price, Franklin, SEI, Impac), flagged `has_fdic = False`. Step 4 prints both match rates on every run.
 
 ### Data provenance
 | Input | Source | How we get it again | Pulled |
@@ -58,10 +61,12 @@ Settings (event dates, windows, call report quarter, field list, delisting assum
 | Call report fields, Q4 2022, all banks | FDIC BankFind API, `https://api.fdic.gov/banks/financials` ([field definitions](https://api.fdic.gov/banks/docs/risview_properties.yaml)) | `code/01_download_fdic.py` | See `data/provenance_log.csv` (logs the API's data vintage too) |
 | Bank IDs (CERT → RSSD) | FDIC BankFind API, `https://api.fdic.gov/banks/institutions` | `code/01_download_fdic.py` | See `data/provenance_log.csv` |
 | CRSP daily returns, delistings, market return | Pulled by Prof. Bowen from WRDS (legacy CRSP daily: `dsf`, `dsenames`, `dsedelist`, `dsi`) on 2026-11-06, at our request: the 343 PERMCOs in `requests/crsp_permcos.csv`, Jan 2022–Dec 2023; variables RET, RETX, DLRET/DLSTCD (delisting), PRC, SHROUT, VOL, TICKER, COMNAM, SHRCD, EXCHCD, and VWRETD (market) | With WRDS access, run [`code/wrds/pull_crsp.do`](code/wrds/pull_crsp.do) (the Stata script used for the pull) next to `requests/crsp_permcos.csv` | Received Nov 10, 2026 |
+| KRE daily prices (regional-bank index for `kre_beta`) | yfinance (adjusted closes), Jan 2022–Mar 2023 | `code/02_download_prices.py` | See `data/provenance_log.csv` |
 | Prices for 3 banks (cross-check only) | yfinance (adjusted closes) | `code/02_download_prices.py` | See `data/provenance_log.csv` |
+| Ownership links (who controls which bank, with dates) | FFIEC National Information Center (NIC), Relationships file (CSV) | Manual (CAPTCHA): on the [NIC data download page](https://www.ffiec.gov/npw/FinancialReport/DataDownload), click CSV → Relationships and save the ZIP in `data/raw/nic/` | Downloaded Nov 17, 2026 (see `data/provenance_log.csv`) |
 | Q4 2022 FFIEC comparison file | FFIEC CDR Bulk Data, Call Reports -- Single Period | On the CDR page, select Call Reports -- Single Period, report date 12/31/2022, and Tab Delimited. Download the ZIP and save as `data/raw/ffiec_call_20221231.zip`. | Downloaded Nov 10, 2026 |
 
-`data/raw/` and `data/interim/` are git-ignored. The scripts recreate them, except the CRSP files, which are licensed and come from Prof. Bowen. **Licensing:** we publish only results computed from CRSP (BHARs, CARs, betas, regressions), never CRSP rows (daily returns, prices, shares outstanding). That includes anything the dashboard loads.
+`data/raw/` and `data/interim/` are git-ignored. The scripts recreate them, except the CRSP files (licensed, from Prof. Bowen) and the two manual FFIEC downloads (NIC relationships, and the optional CDR comparison file). **Licensing:** we publish only results computed from CRSP (BHARs, CARs, betas, regressions), never CRSP rows (daily returns, prices, shares outstanding). That includes anything the dashboard loads.
 
 ### FDIC API vs. FFIEC check
 
@@ -88,7 +93,8 @@ The detailed bank-by-bank values are in [`outputs/ffiec_fdic_comparison.md`](out
 | `bhr_0_2` | Buy-and-hold return over trading days 0 to +2 (Mar 9, 10, 13, 2023), including the delisting return on the delisting date |
 | `bhar_0_2` | **Main outcome.** `bhr_0_2` minus the CRSP value-weighted market's buy-and-hold return over the same days (−3.84%) |
 | `car_0_2` | Sum of market-model abnormal returns over the same days; beta from CRSP VW market, trading days −250 to −30 |
-| `in_sample` | Matched to FDIC, has event returns, and positive equity (323 entities) |
+| `kre_beta` | Slope of the bank's daily return on KRE's daily return (SPDR S&P Regional Banking ETF), trading days −250 to −30, at least 150 days. Control for the common regional-bank shock in R5 |
+| `in_sample` | Matched to FDIC, has event returns, and positive equity (333 entities) |
 
 ### Threats to validity (so far)
 1. **Failed banks' missing delisting returns.** SVB and Signature stop trading on Mar 10 with no CRSP delisting return. We set it to −100% (shareholders were wiped out), which makes their BHAR about −96%. Dropping them instead (spec R3) cuts the uninsured-deposit coefficient by more than half (−0.15 to −0.06). See `specs_tried.md`.
@@ -96,11 +102,11 @@ The detailed bank-by-bank values are in [`outputs/ffiec_fdic_comparison.md`](out
 3. **Loss measure:** `EQCCOMPI` is an annual OCI flow, not accumulated AOCI; the diagnostic column is now `oci_2022_to_equity`. See [Morgan’s reconciliation](docs/zions_measurement.md). Losses on securities moved from AFS to HTM sit in equity (AOCI), not in the HTM gap (Zions shows a negative HTM loss). Securities-only measures also ignore losses on loans.
 4. **Custody banks:** State Street (101%), BNY Mellon (93%), and Citi (82%) have very high uninsured shares, but most of those deposits are operational accounts for institutional clients, which behave differently from a startup's payroll account. One ratio is slightly above 1 because the FDIC's uninsured estimate and domestic deposits are measured differently.
 5. **Outliers in ratios:** `sec_loss_to_equity` has a median of 0.21 but a maximum of 29.1 (First American), and 8 in-sample entities are above 1. No winsorizing yet; any choice we make will be logged in `specs_tried.md` before it is run. Step 4 prints these on every run.
-6. **Entities without FDIC data:** 16 of 343 don't match. 6 are non-banks, but 10 are real banks lost because their top-tier holder is an unlisted parent (see "Linking banks" above). They are left out of the regressions for now.
+6. **Entities without FDIC data:** 6 of 343 don't match, all non-banks that own a thrift. The 10 real banks our first link rule dropped are now matched through the NIC ownership file (see "Linking banks" above).
 7. **Small, illiquid banks** have noisy returns; 2,247 CRSP rows use a bid/ask midpoint instead of a closing price.
 8. **Bank-level measures, company-level returns.** Our measures come from the call reports of each entity's *bank subsidiaries*, but the outcome is the stock return of the *whole listed company*. For firms where the bank is a small part of the business (Schwab, Ameriprise, First American, Goldman Sachs, Morgan Stanley, AmEx, Raymond James, Stifel, Synchrony, Discover, Ally, SoFi, LendingClub), the ratio does not describe what the stock is pricing.
 9. **The window includes the rescue.** Day +2 (Mar 13) comes after the Sunday, Mar 12 announcement that all SVB and Signature depositors would be protected and that banks could borrow against their bonds at par (BTFP). That policy targets both of our explanatory variables, so the three-day return measures the panic *net of* the rescue.
-10. **Standard errors.** All banks share the same three trading days, so their abnormal returns are correlated beyond the market (a regional-bank factor). HC3 standard errors do not correct for that, so our p-values are probably too small.
+10. **Standard errors.** All banks share the same three trading days, so their abnormal returns are correlated beyond the market (a regional-bank factor). HC3 standard errors do not correct for that, so our p-values are probably too small. R5 adds each bank's pre-event beta to KRE (a regional-bank ETF) as a control for that common factor; the uninsured-share coefficient barely moves (see `outputs/regressions_v0.md`). This reduces the problem but doesn't remove it.
 11. **Pre-tax losses vs. after-tax equity.** HTM losses are pre-tax while `EQTOT` is after-tax, and in `sec_loss_to_equity` the AFS losses have already reduced `EQTOT` through AOCI.
 
 ---

@@ -15,6 +15,11 @@ NYFED_LINK_URL = ("https://www.newyorkfed.org/medialibrary/media/research/bankin
                   "crsp_20240930v2.csv")
 NYFED_LINK_VINTAGE_END = 20240930  # last date covered by this vintage; links ending earlier = failed, merged, or delisted
 
+# FFIEC NIC relationships file: which institution controls which, with start/end dates (instructor audit A4,
+# specs_tried.md #13). Manual download (the FFIEC site blocks scripts with a CAPTCHA):
+# https://www.ffiec.gov/npw/FinancialReport/DataDownload -> "Relationships" (CSV). Save the ZIP in data/raw/nic/.
+NIC_DIR = RAW / "nic"
+
 # Call report quarter: the last one public BEFORE the event.
 # Q4 2022 call reports were due Jan 30, 2023, well before SVB's Mar 8, 2023 announcement.
 CALL_REPORT_DATE = "20221231"
@@ -58,7 +63,14 @@ MIN_EST_OBS = 150
 # specs_tried.md logs the alternative (dropping them).
 MISSING_DLRET_FAILED = -1.0
 
-# yfinance is used only as an independent cross-check of CRSP returns in the hand checks.
+# Regional-bank index for the common-shock control (instructor audit A3, specs_tried.md #14).
+# KRE (SPDR S&P Regional Banking ETF) isn't in our CRSP pull, so its adjusted closes come from yfinance.
+KRE_TICKER = "KRE"
+KRE_START = "2022-01-01"   # covers the estimation window (trading days -250 to -30 before Mar 9, 2023)
+KRE_END = "2023-03-31"
+KRE_PRICES = RAW / "kre_daily.csv"
+
+# yfinance is also used as an independent cross-check of CRSP returns in the hand checks.
 CHECK_TICKERS = ["JPM", "WAL", "ZION"]
 PRICE_START = "2023-03-01"
 PRICE_END = "2023-03-20"

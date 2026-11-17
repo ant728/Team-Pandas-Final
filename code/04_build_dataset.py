@@ -1,8 +1,12 @@
 """Step 4: build the final dataset. One row = one listed bank entity in the NY Fed link on Dec 31, 2022.
 
-1. Map every FDIC-insured bank to a sample entity:
-   - to its holding company, if the holding company (RSSDHCR on the Q4 2022 report) is in the sample, or
-   - to itself, if the bank itself is the listed entity (e.g. First Republic, Signature, Zions).
+1. Map every FDIC-insured bank to a sample entity (specs_tried.md #13, instructor audit A4):
+   - to itself, if the bank itself is the listed entity (e.g. First Republic, Signature, Zions), or
+   - to the HIGHEST listed entity that controls it on Dec 31, 2022, walking up the FFIEC NIC relationships
+     file. Before this, we used only the bank's top-tier holder (RSSDHCR), which misses a listed company
+     that sits below an unlisted parent (e.g. a listed mid-tier company owned by a mutual holding company).
+   - A bank controlled by ANOTHER insured bank is left out of the sums: the parent bank's consolidated call
+     report already includes it (specs_tried.md #15).
 2. Sum the call report fields across each entity's banks and compute the fragility measures.
 3. Merge with CRSP event returns on PERMCO.
 
@@ -17,7 +21,7 @@ Outputs:
 import numpy as np
 import pandas as pd
 
-from config import CALL_REPORT_DATE, INSURANCE_LIMIT_THOUSANDS, OUTPUTS, PROCESSED, RAW
+from config import CALL_REPORT_DATE, INSURANCE_LIMIT_THOUSANDS, NIC_DIR, OUTPUTS, PROCESSED, RAW
 
 SUM_FIELDS = ["ASSET", "DEP", "DEPDOM", "uninsured", "uninsured_reported", "EQTOT", "EQCCOMPI",
               "SC", "SCHA", "SCHF", "SCAA", "SCAF"]
@@ -36,13 +40,62 @@ def bank_level():
     return fin
 
 
+def controlling_parents():
+    """offspring RSSD -> its controlling parents' RSSDs, for relationships active on the call report date."""
+    files = sorted(NIC_DIR.glob("*.zip")) + sorted(NIC_DIR.glob("*.csv"))
+    if not files:
+        raise FileNotFoundError(
+            f"No NIC relationships file in {NIC_DIR}. Download 'Relationships' (CSV) from "
+            "https://www.ffiec.gov/npw/FinancialReport/DataDownload (manual: the site uses a CAPTCHA) "
+            "and save the ZIP there. See README provenance.")
+    rel = pd.read_csv(files[0], low_memory=False)
+    rel.columns = rel.columns.str.lstrip("#").str.strip()
+    d = int(CALL_REPORT_DATE)
+    active = rel[(rel["CTRL_IND"] == 1) & (rel["DT_START"] <= d) & (rel["DT_END"] >= d)]
+    print(f"NIC relationships: {len(rel)} rows, {len(active)} controlling and active on {CALL_REPORT_DATE} "
+          f"({files[0].name})")
+    return active.groupby("ID_RSSD_OFFSPRING")["ID_RSSD_PARENT"].apply(list).to_dict()
+
+
+def listed_controller(rssd, parents, sample):
+    """The highest (farthest up) listed entity that controls this institution, or None."""
+    best, best_depth, seen, frontier, depth = set(), -1, {rssd}, [rssd], 0
+    while frontier:
+        depth += 1
+        frontier = [p for x in frontier for p in parents.get(x, []) if p not in seen]
+        seen.update(frontier)
+        listed = {p for p in frontier if p in sample}
+        if listed:
+            best, best_depth = listed, depth
+    assert len(best) <= 1, f"RSSD {rssd} is controlled by two listed entities at the same level: {best}"
+    return next(iter(best), None)
+
+
 def assign_entities(fin, uni):
     sample = set(uni["rssd_id"])
-    via_hc = fin["RSSDHCR"].where(fin["RSSDHCR"].isin(sample))
+    parents = controlling_parents()
     via_bank = fin["FED_RSSD"].where(fin["FED_RSSD"].isin(sample))
+    via_nic = fin["FED_RSSD"].map(lambda r: listed_controller(r, parents, sample) if pd.notna(r) else None)
     # A bank can't be both its own listed entity and owned by a different listed one.
-    assert not (via_hc.notna() & via_bank.notna()).any()
-    fin["rssd_id"] = via_hc.fillna(via_bank)
+    clash = via_bank.notna() & via_nic.notna()
+    assert not clash.any(), f"listed banks also controlled by a listed company: {fin.loc[clash, 'NAME'].tolist()}"
+    fin["rssd_id"] = via_bank.fillna(via_nic)
+
+    # Bank-owned banks are already inside their parent bank's consolidated call report (specs_tried.md #15).
+    bank_ids = set(fin["FED_RSSD"].dropna())
+    owned_by_bank = fin["FED_RSSD"].map(lambda r: any(p in bank_ids for p in parents.get(r, [])))
+    dropped = fin[owned_by_bank & fin["rssd_id"].notna()]
+    if len(dropped):
+        print("Left out of the sums (already in their parent bank's report): "
+              + ", ".join(f"{n.title()} -> entity {int(e)}" for n, e in dropped[["NAME", "rssd_id"]].itertuples(index=False)))
+    fin.loc[owned_by_bank, "rssd_id"] = np.nan
+    fin["fdic_link"] = np.where(via_bank.notna(), "bank itself", "controlling company (NIC)")
+
+    # The old rule, kept only to report what changed: the top-tier holder (RSSDHCR) if it is in the sample.
+    old = fin["RSSDHCR"].where(fin["RSSDHCR"].isin(sample)).fillna(via_bank)
+    differ = old.notna() & fin["rssd_id"].notna() & (old != fin["rssd_id"])
+    assert not differ.any(), f"NIC walk disagrees with RSSDHCR for: {fin.loc[differ, 'NAME'].tolist()}"
+    fin["old_rule_match"] = old.notna()
     return fin[fin["rssd_id"].notna()].astype({"rssd_id": int})
 
 
@@ -50,6 +103,7 @@ def measures(banks):
     g = banks.groupby("rssd_id")
     m = g[SUM_FIELDS].sum(min_count=1)
     m["n_banks"] = g.size()
+    m["n_banks_old_rule"] = g["old_rule_match"].sum()  # for reporting what the NIC walk changed
     m["total_assets_bn"] = m["ASSET"] / 1e6
     m["log_assets"] = np.log(m["ASSET"])
     m["uninsured_dep_share"] = m["uninsured"] / m["DEPDOM"]
@@ -87,7 +141,7 @@ def main():
     cols = ["rssd_id", "permco", "permno", "ticker", "name", "inst_type", "n_banks", "total_assets_bn",
             "log_assets", "uninsured_dep_share", "share_uninsured_reported", "htm_unrealized_loss_bn",
             "afs_unrealized_loss_bn", "htm_loss_to_equity", "sec_loss_to_equity", "oci_2022_to_equity",
-            "htm_share_of_securities", "n_event_days", "delisted_in_window", "dlret_imputed", "beta", "est_obs",
+            "htm_share_of_securities", "n_event_days", "delisted_in_window", "dlret_imputed", "beta", "kre_beta", "est_obs",
             "bhr_0_2", "bhar_0_2", "car_0_2", "has_fdic", "has_returns", "positive_equity", "in_sample"]
     PROCESSED.mkdir(parents=True, exist_ok=True)
     OUTPUTS.mkdir(parents=True, exist_ok=True)
@@ -97,6 +151,13 @@ def main():
     print(f"{len(final)} entities | FDIC match: {final['has_fdic'].sum()} | CRSP event returns: "
           f"{final['has_returns'].sum()} | positive equity: {final['positive_equity'].sum()} | "
           f"IN SAMPLE: {final['in_sample'].sum()}")
+    old = final["n_banks_old_rule"].fillna(0) > 0
+    grew = final[old & (final["n_banks"] > final["n_banks_old_rule"])]
+    print(f"FDIC match rate: {old.sum()}/{len(final)} with the top-tier-holder rule -> "
+          f"{final['has_fdic'].sum()}/{len(final)} with the NIC walk. Newly matched: "
+          + ", ".join(final.loc[final["has_fdic"] & ~old, "name"].str.title()))
+    print(f"Entities that gained banks under the NIC walk: {len(grew)}"
+          + (" (" + ", ".join(grew["name"].str.title()) + ")" if len(grew) else ""))
     print("not matched to FDIC:", ", ".join(final.loc[~final["has_fdic"], "name"].str.title()))
 
     # Range checks. These values are possible in the data but suspicious, so we list them on every run
