@@ -3,11 +3,14 @@
 Writes outputs/hand_checks.md and raises if any check fails.
 """
 import csv
+import io
+import zipfile
 
 import numpy as np
 import pandas as pd
 
-from config import CALL_REPORT_DATE, CRSP_DAILY, CRSP_MARKET, INSURANCE_LIMIT_THOUSANDS, OUTPUTS, RAW
+from config import (CALL_REPORT_DATE, CRSP_DAILY, CRSP_MARKET, ESTIMATION_WINDOW, EVENT_DAY0, INSURANCE_LIMIT_THOUSANDS,
+                    KRE_PRICES, NIC_DIR, OUTPUTS, RAW)
 from ffiec_comparison import FFIEC_ZIP, comparison_table, write_report as write_ffiec_report
 
 final = pd.read_csv(OUTPUTS / "final_dataset.csv").set_index("ticker")
@@ -43,6 +46,20 @@ with open(RAW / f"fdic_financials_{CALL_REPORT_DATE}.csv", newline="") as f:
 check("JPM total assets ($B), summed by hand", final.at["JPM", "total_assets_bn"], jpm, 1e-3,
       "raw FDIC rows with RSSDHCR = 1039502 (JPMorgan Chase & Co.)")
 
+# --- NIC link (instructor audit A4): TFS Financial, a listed company under a mutual holding company --
+# The old rule (top-tier holder) missed it. Rebuild its assets from the raw NIC and FDIC files with plain loops.
+tfsl = int(final.at["TFSL", "rssd_id"])
+with zipfile.ZipFile(next(NIC_DIR.glob("*.zip"))) as z, z.open(z.namelist()[0]) as f:
+    kids = {int(r["ID_RSSD_OFFSPRING"]) for r in csv.DictReader(io.TextIOWrapper(f, encoding="utf-8-sig"))
+            if int(r["#ID_RSSD_PARENT"]) == tfsl and r["CTRL_IND"] == "1"
+            and int(r["DT_START"]) <= d <= int(r["DT_END"])}
+with open(RAW / "fdic_institutions.csv", newline="") as f:
+    certs = {r["CERT"] for r in csv.DictReader(f) if r["FED_RSSD"] and int(float(r["FED_RSSD"])) in kids}
+with open(RAW / f"fdic_financials_{CALL_REPORT_DATE}.csv", newline="") as f:
+    tfsl_assets = sum(float(r["ASSET"]) for r in csv.DictReader(f) if r["CERT"] in certs) / 1e6
+check("TFS Financial total assets ($B), via NIC ownership rows", final.at["TFSL", "total_assets_bn"], tfsl_assets, 1e-3,
+      "raw NIC relationships (banks TFS Financial controls on 2022-12-31) and raw FDIC rows")
+
 # --- Uninsured-deposit approximation vs. the reported estimate -------------------------------
 fin = pd.read_csv(RAW / f"fdic_financials_{CALL_REPORT_DATE}.csv")
 rep = fin[fin["DEPUNINS"].notna() & (fin["DEPDOM"] > 0)]
@@ -77,6 +94,28 @@ with open(CRSP_MARKET, newline="") as f:
             mkt *= 1 + float(r["vwretd"])
 check("WAL BHAR[0,+2], recomputed from raw CRSP rows", final.at["WAL", "bhar_0_2"], (wal - 1) - (mkt - 1), 1e-4,
       "crsp_daily_2022_2023.csv and crsp_market_vwretd.csv")
+
+# --- WAL's KRE beta (spec R5) recomputed as cov/var with a plain loop --------------------------
+kre_px = {}
+with open(KRE_PRICES, newline="") as f:
+    for r in csv.DictReader(f):
+        kre_px[r["date"][:10]] = float(r["close"])
+kre_dates = sorted(kre_px)
+kre_ret = {d1: kre_px[d1] / kre_px[d0] - 1 for d0, d1 in zip(kre_dates, kre_dates[1:])}
+with open(CRSP_MARKET, newline="") as f:
+    cal = sorted(r["date"] for r in csv.DictReader(f))
+i0 = cal.index(EVENT_DAY0)
+est_days = set(cal[i0 + ESTIMATION_WINDOW[0]: i0 + ESTIMATION_WINDOW[1] + 1])
+pairs = []
+with open(CRSP_DAILY, newline="") as f:
+    for r in csv.DictReader(f):
+        if r["ticker"] == "WAL" and r["date"] in est_days and r["ret"] not in ("", "C", "B"):
+            pairs.append((kre_ret[r["date"]], float(r["ret"])))
+mx = sum(x for x, _ in pairs) / len(pairs)
+my = sum(y for _, y in pairs) / len(pairs)
+wal_kre_beta = sum((x - mx) * (y - my) for x, y in pairs) / sum((x - mx) ** 2 for x, _ in pairs)
+check("WAL beta to KRE, recomputed as cov/var from raw files", final.at["WAL", "kre_beta"], wal_kre_beta, 1e-8,
+      "crsp_daily_2022_2023.csv and kre_daily.csv, trading days -250 to -30")
 
 # --- SVB's delisting treatment -----------------------------------------------------------------
 check("SVB buy-and-hold return with -100% delisting return", final.at["SIVB", "bhr_0_2"], -1.0, 1e-9,

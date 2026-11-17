@@ -122,7 +122,7 @@ export function parseDashboardCsv(text) {
 export function parseRegressionComparisons(text) {
   const comparisons = [
     ["R1 BHAR on uninsured share + HTM loss/equity", "All banks"],
-    ["R5 R1 without SVB (event trigger)", "Excluding SVB"],
+    ["R6 R1 without SVB (event trigger)", "Excluding SVB"],
     ["R3 R1 without SVB and Signature (imputed -100%)", "Excluding SVB and Signature"],
   ];
   const samples = new Map(comparisons);
