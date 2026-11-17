@@ -117,3 +117,55 @@ export function parseDashboardCsv(text) {
     return row;
   });
 }
+
+/** Read comparable uninsured-deposit coefficients from the main sample and its two failed-bank robustness samples. */
+export function parseRegressionComparisons(text) {
+  const comparisons = [
+    ["R1 BHAR on uninsured share + HTM loss/equity (main sample: without SVB)", "Main: excluding SVB"],
+    ["R6 R1 including SVB (the earlier baseline)", "Including SVB"],
+    ["R3 R1 also without Signature (no imputed -100% returns)", "Excluding SVB and Signature"],
+  ];
+  const samples = new Map(comparisons);
+  const expectedFormula = "bhar_0_2 ~ uninsured_dep_share + htm_loss_to_equity + log_assets";
+  const [header = [], ...records] = csvRecords(text);
+  const headers = header.map((value) => value.trim());
+  const column = new Map(headers.map((name, index) => [name, index]));
+  const requiredColumns = ["spec", "formula", "variable", "coef", "se", "t", "p", "n", "r2"];
+  const missing = requiredColumns.filter((name) => !column.has(name));
+  if (missing.length) throw new Error(`Missing regression CSV columns: ${missing.join(", ")}.`);
+  if (column.size !== headers.length) throw new Error("The regression CSV has duplicate column names.");
+
+  const selected = new Map();
+  records.forEach((record, index) => {
+    const label = `Regression CSV record ${index + 2}`;
+    if (record.length !== headers.length) {
+      throw new Error(`${label} has ${record.length} columns; expected ${headers.length}.`);
+    }
+    const read = (name) => record[column.get(name)];
+    const spec = read("spec");
+    if (!samples.has(spec) || read("variable") !== "uninsured_dep_share") return;
+    if (selected.has(spec)) throw new Error(`${label} repeats the uninsured-deposit coefficient for ${spec}.`);
+    if (read("formula").trim() !== expectedFormula) {
+      throw new Error(`${label} has an incompatible formula for ${spec}.`);
+    }
+
+    const row = { sample: samples.get(spec), spec };
+    for (const name of ["n", "coef", "se"]) {
+      const value = read(name).trim();
+      const number = Number(value);
+      if (!decimal.test(value) || !Number.isFinite(number)) {
+        throw new Error(`${label} has an invalid number in ${name}.`);
+      }
+      if (name === "se" && number < 0) throw new Error(`${label} has a negative standard error.`);
+      if (name === "n" && (!Number.isSafeInteger(number) || number <= 0)) {
+        throw new Error(`${label} needs a positive integer sample size.`);
+      }
+      row[name] = number;
+    }
+    selected.set(spec, row);
+  });
+
+  const absent = comparisons.filter(([spec]) => !selected.has(spec)).map(([spec]) => spec);
+  if (absent.length) throw new Error(`Missing uninsured-deposit regression rows: ${absent.join("; ")}.`);
+  return comparisons.map(([spec]) => selected.get(spec));
+}

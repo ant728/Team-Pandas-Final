@@ -1,6 +1,6 @@
 # Specifications tried
 
-Every specification we run goes here, including the ones we drop. Count so far: **4 return/measure variants** on the 6-bank proof of concept (Oct 29), plus **2 measurement choices and 4 regressions** on the full sample (Nov 10). Each regression was run once, as listed; none was re-run with different controls or samples beyond what's here.
+Every specification we run goes here, including the ones we drop. Count so far: **4 return/measure variants** on the 6-bank proof of concept (Oct 29), plus **2 measurement choices and 5 regression specifications** on the full sample (four introduced Nov 10, one Nov 17). Rebuilding repeats the listed specifications; no other control or sample variants have been tried.
 
 ## Proof of concept (6 banks, yfinance returns)
 
@@ -21,8 +21,11 @@ Every specification we run goes here, including the ones we drop. Count so far: 
 | 8 | 2026-11-10 | R2: R1 with (HTM + AFS loss)/equity instead | 323 | Uninsured −0.164 (p = 0.03); securities loss +0.005 (p = 0.83) | Robustness |
 | 9 | 2026-11-10 | R3: R1 without SVB and Signature | 321 | Uninsured −0.062 (p = 0.05); HTM loss −0.021 (p = 0.74) | Robustness: **the uninsured effect leans heavily on the two failed banks** |
 | 10 | 2026-11-10 | R4: R1 with market-model CAR as the outcome | 322 | Uninsured −0.201 (p = 0.03); HTM loss −0.128 (p = 0.47) | Robustness |
+| 16 | 2026-11-17 | R6 (numbered R5 and #13 when first run; renumbered because #13–#15 and R5 were taken by the A3/A4 fixes): R1 without SVB (event trigger), retaining Signature and its existing imputed delisting return; same controls and HC3 SEs | In-sample entities with ticker != SIVB (N = 322) | Uninsured −0.1113 (SE 0.0593, p = 0.060); HTM loss −0.0165 (p = 0.806); R² 0.133 | Additional A2 sensitivity; R1 remains the baseline |
 
 **Magnitude (R1):** a one-standard-deviation higher uninsured share (16 pp) goes with a 2.4 pp lower BHAR over the three days. The average bank's BHAR was −10.3%.
+
+**A2 sensitivity recorded November 17, 2026:** R6 (#16) was added after reading the instructor audit, including its reported leave-SVB-out estimate. It is motivated by SVB's role as the event trigger, not an independent pre-registered test. Compare R1 (all banks), R6 (without SVB), and R3 (without SVB and Signature) with the same R1 formula and HC3 standard errors. This addition does not change the main sample, the existing R1–R4 specifications, or the delisting-return assumption; the team's final economic justification of the main sample remains a separate decision.
 
 ## Choices fixed before looking at returns
 One exception: the outcome definition itself (compounded BHAR rather than summed CAR) was chosen *after* seeing four banks' event returns in the proof of concept (#1–#3). The reason was mechanical (summing overstates large crashes), but it was not fixed blind.
@@ -88,3 +91,22 @@ The March 9-13 event return is not used to build the 2022 score. These are descr
 | R4 (CAR) | −0.201 (p = 0.032) | −0.198 (SE 0.089, p = 0.026) | HTM loss −0.127 (p = 0.46) |
 
 **R5 (#14), N = 332:** uninsured share −0.142 (SE 0.059, p = 0.016); `kre_beta` −0.158 (SE 0.039, p < 0.001); R² rises from 0.17 to 0.29. Banks that moved more with regional banks before the event fell more during it, but controlling for that leaves the uninsured-share coefficient almost unchanged. This addresses the common-shock concern only partly: it controls for each bank's exposure to the regional-bank factor, but the standard errors still treat residuals as independent.
+
+## Main sample decision (audit A2, written 2026-11-17, before rerunning)
+
+| # | Date | What | Sample / outcome | Decision |
+|---|---|---|---|---|
+| 17 | 2026-11-17 | **Main sample excludes SVB; Signature stays in with its −100% delisting return.** (1) SVB is the event, not a response to it: its Mar 8 announcement and Mar 10 failure *are* the shock, and our question is how the shock spread to *other* banks, so SVB's own return doesn't belong on the left-hand side. (2) Signature is a separate bank that suffered a run after SVB and was closed on Mar 12, the kind of outcome we want to explain, so it stays. (3) −100% is the economically right value for Signature: shareholders of a bank in FDIC receivership are wiped out; CRSP has no delisting return because trading stopped, not because the value is unknown. | Main sample = `in_sample` minus SVB. R1, R2, R4 and R5 run on it. Robustness: R6 = R1 including SVB (the earlier baseline); R3 = R1 also without Signature | Main. **Disclosure:** decided after seeing the instructor audit's leave-out table (and #16), which showed the coefficient weakening without SVB. The reasons above are economic, and all three rows are reported in the README and the dashboard whatever they show |
+
+**Results of #17 (run 2026-11-17, after the entry above was committed).** Uninsured-share coefficient, HC3:
+
+| Spec | Sample | N | Coef (SE) | p |
+|---|---|---|---|---|
+| **R1 (main)** | without SVB | 332 | **−0.112 (0.056)** | **0.047** |
+| R2 | without SVB, all securities loss | 332 | −0.119 (0.056) | 0.033 |
+| R3 | also without Signature | 331 | −0.065 (0.030) | 0.032 |
+| R4 | without SVB, market-model CAR | 331 | −0.133 (0.063) | 0.035 |
+| R5 | without SVB, + KRE beta | 331 | −0.109 (0.053) | 0.038 |
+| R6 | including SVB (earlier baseline) | 333 | −0.149 (0.066) | 0.023 |
+
+Magnitude (R1): a one-SD higher uninsured share (16.0 pp) goes with a 1.8 pp lower BHAR; the average main-sample bank's BHAR was −10.0%. The loss measures stay insignificant in every spec. The main estimate is about three-quarters of the old baseline, and only just clears 5%.

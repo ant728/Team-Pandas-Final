@@ -1,4 +1,4 @@
-"""Serve the dashboard and its published CSV on the local machine."""
+"""Serve the dashboard and its published CSVs on the local machine."""
 
 import argparse
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -14,6 +14,7 @@ ROUTES = {
     "/app/dashboard.mjs": ("app/dashboard.mjs", "text/javascript"),
     "/app/data.mjs": ("app/data.mjs", "text/javascript"),
     "/outputs/final_dataset.csv": ("outputs/final_dataset.csv", "text/csv"),
+    "/outputs/regressions_v0.csv": ("outputs/regressions_v0.csv", "text/csv"),
 }
 
 

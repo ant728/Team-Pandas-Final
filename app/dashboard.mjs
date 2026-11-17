@@ -1,10 +1,11 @@
-import { parseDashboardCsv } from "./data.mjs";
+import { parseDashboardCsv, parseRegressionComparisons } from "./data.mjs";
 
 const byId = (id) => document.getElementById(id);
 const pages = ["intro", "method", "results", "screen"];
 const dataset = new URL("../outputs/final_dataset.csv", import.meta.url);
 const pct = new Intl.NumberFormat("en-US", { style: "percent", maximumFractionDigits: 2 });
 const number = new Intl.NumberFormat("en-US", { maximumFractionDigits: 2 });
+const coefficient = new Intl.NumberFormat("en-US", { minimumFractionDigits: 3, maximumFractionDigits: 3 });
 
 let entities = [];
 let plotted = [];
@@ -280,6 +281,32 @@ async function start() {
   }
 }
 
+async function loadRegressionComparisons() {
+  try {
+    const url = new URL("../outputs/regressions_v0.csv", import.meta.url);
+    const response = await fetch(url, { cache: "no-store" });
+    if (!response.ok) throw new Error("Regression output returned HTTP " + response.status + ".");
+    const comparisons = parseRegressionComparisons(await response.text());
+    const rows = comparisons.map((comparison) => {
+      const tr = element("tr");
+      const sample = element("th", comparison.sample);
+      sample.scope = "row";
+      tr.append(
+        sample,
+        element("td", comparison.n),
+        element("td", coefficient.format(comparison.coef)),
+        element("td", coefficient.format(comparison.se)),
+      );
+      return tr;
+    });
+    byId("regression-rows").replaceChildren(...rows);
+    byId("regression-status").hidden = true;
+    byId("regression-table").hidden = false;
+  } catch (error) {
+    byId("regression-status").textContent = "Regression comparison unavailable: " + error.message;
+  }
+}
+
 window.addEventListener("hashchange", () => showPage(true));
 document.querySelector(".skip-link").addEventListener("click", (event) => {
   event.preventDefault();
@@ -298,3 +325,4 @@ for (const button of document.querySelectorAll("[data-sort]")) {
 new ResizeObserver(() => requestAnimationFrame(drawChart)).observe(byId("plot"));
 showPage();
 start();
+loadRegressionComparisons();

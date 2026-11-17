@@ -122,7 +122,7 @@ check("SVB buy-and-hold return with -100% delisting return", final.at["SIVB", "b
       "our assumption for the missing delisting return (config.MISSING_DLRET_FAILED)")
 
 # --- Step 5: R1 recomputed with plain numpy (OLS by least squares, HC3 by the sandwich formula) --
-s = final[final["in_sample"]]
+s = final[final["main_sample"]]  # R1 runs on the main sample (specs_tried.md #17)
 X = np.column_stack([np.ones(len(s)), s["uninsured_dep_share"], s["htm_loss_to_equity"], s["log_assets"]])
 y = s["bhar_0_2"].to_numpy()
 b = np.linalg.lstsq(X, y, rcond=None)[0]

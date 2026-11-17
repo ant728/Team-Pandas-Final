@@ -70,6 +70,10 @@ KRE_START = "2022-01-01"   # covers the estimation window (trading days -250 to 
 KRE_END = "2023-03-31"
 KRE_PRICES = RAW / "kre_daily.csv"
 
+# Main sample (specs_tried.md #17, instructor audit A2): SVB is the event itself, not a response to it,
+# so it is left out of the main sample. Signature stays in, with its -100% delisting return.
+EVENT_TRIGGER_TICKERS = ["SIVB"]
+
 # yfinance is also used as an independent cross-check of CRSP returns in the hand checks.
 CHECK_TICKERS = ["JPM", "WAL", "ZION"]
 PRICE_START = "2023-03-01"
