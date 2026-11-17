@@ -97,3 +97,16 @@ The March 9-13 event return is not used to build the 2022 score. These are descr
 | # | Date | What | Sample / outcome | Decision |
 |---|---|---|---|---|
 | 17 | 2026-11-17 | **Main sample excludes SVB; Signature stays in with its −100% delisting return.** (1) SVB is the event, not a response to it: its Mar 8 announcement and Mar 10 failure *are* the shock, and our question is how the shock spread to *other* banks, so SVB's own return doesn't belong on the left-hand side. (2) Signature is a separate bank that suffered a run after SVB and was closed on Mar 12, the kind of outcome we want to explain, so it stays. (3) −100% is the economically right value for Signature: shareholders of a bank in FDIC receivership are wiped out; CRSP has no delisting return because trading stopped, not because the value is unknown. | Main sample = `in_sample` minus SVB. R1, R2, R4 and R5 run on it. Robustness: R6 = R1 including SVB (the earlier baseline); R3 = R1 also without Signature | Main. **Disclosure:** decided after seeing the instructor audit's leave-out table (and #16), which showed the coefficient weakening without SVB. The reasons above are economic, and all three rows are reported in the README and the dashboard whatever they show |
+
+**Results of #17 (run 2026-11-17, after the entry above was committed).** Uninsured-share coefficient, HC3:
+
+| Spec | Sample | N | Coef (SE) | p |
+|---|---|---|---|---|
+| **R1 (main)** | without SVB | 332 | **−0.112 (0.056)** | **0.047** |
+| R2 | without SVB, all securities loss | 332 | −0.119 (0.056) | 0.033 |
+| R3 | also without Signature | 331 | −0.065 (0.030) | 0.032 |
+| R4 | without SVB, market-model CAR | 331 | −0.133 (0.063) | 0.035 |
+| R5 | without SVB, + KRE beta | 331 | −0.109 (0.053) | 0.038 |
+| R6 | including SVB (earlier baseline) | 333 | −0.149 (0.066) | 0.023 |
+
+Magnitude (R1): a one-SD higher uninsured share (16.0 pp) goes with a 1.8 pp lower BHAR; the average main-sample bank's BHAR was −10.0%. The loss measures stay insignificant in every spec. The main estimate is about three-quarters of the old baseline, and only just clears 5%.

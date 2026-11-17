@@ -126,8 +126,8 @@
             <tbody id="regression-rows"></tbody>
           </table>
         </div>
-        <p class="regression-note">Each model controls for HTM loss relative to equity and log assets. SVB triggered the event, so excluding it examines the response among the other banks. Excluding both SVB and Signature also removes the two imputed failure outcomes. The scatter below keeps the pipeline’s current analysis sample.</p>
-        <p class="regression-note">HC3 standard errors allow different error variances across banks; they do not correct for a shared regional-bank shock. <a href="../outputs/regressions_v0.csv">View the generated regression output.</a></p>
+        <p class="regression-note">Each model controls for HTM loss relative to equity and log assets. The main sample leaves out SVB, because its collapse is the event itself; Signature stays in with its −100% delisting return. The other two rows show how much the estimate depends on those two banks. The scatter below shows every in-sample bank, SVB included.</p>
+        <p class="regression-note">HC3 standard errors allow different error variances across banks; they do not correct for a shared regional-bank shock. R5 in the regression output adds each bank’s beta to KRE (a regional-bank ETF) as a partial control. <a href="../outputs/regressions_v0.csv">View the generated regression output.</a></p>
       </article>
       <div id="results-grid" class="results-grid" hidden>
         <article class="card chart-card">

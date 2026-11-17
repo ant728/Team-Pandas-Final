@@ -118,12 +118,12 @@ export function parseDashboardCsv(text) {
   });
 }
 
-/** Read comparable uninsured-deposit coefficients from the three planned samples. */
+/** Read comparable uninsured-deposit coefficients from the main sample and its two failed-bank robustness samples. */
 export function parseRegressionComparisons(text) {
   const comparisons = [
-    ["R1 BHAR on uninsured share + HTM loss/equity", "All banks"],
-    ["R6 R1 without SVB (event trigger)", "Excluding SVB"],
-    ["R3 R1 without SVB and Signature (imputed -100%)", "Excluding SVB and Signature"],
+    ["R1 BHAR on uninsured share + HTM loss/equity (main sample: without SVB)", "Main: excluding SVB"],
+    ["R6 R1 including SVB (the earlier baseline)", "Including SVB"],
+    ["R3 R1 also without Signature (no imputed -100% returns)", "Excluding SVB and Signature"],
   ];
   const samples = new Map(comparisons);
   const expectedFormula = "bhar_0_2 ~ uninsured_dep_share + htm_loss_to_equity + log_assets";

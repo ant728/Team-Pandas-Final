@@ -22,7 +22,7 @@
 
 Current outputs:
 - [`outputs/final_dataset.csv`](outputs/final_dataset.csv): all 343 entities, with flags for why any are out of the sample
-- [`outputs/regressions_v0.md`](outputs/regressions_v0.md): the first cross-sectional regressions
+- [`outputs/regressions_v0.md`](outputs/regressions_v0.md): the cross-sectional regressions, with magnitudes. **Main result (R1, 332 banks, SVB left out as the trigger):** a one-SD higher uninsured share (16 pp of domestic deposits) goes with a 1.8 pp lower three-day BHAR (coefficient −0.112, p = 0.047); the average bank's BHAR was −10.0%. With SVB included it's −0.149 (p = 0.023); without SVB and Signature, −0.065 (p = 0.032).
 - [`outputs/summary_stats.csv`](outputs/summary_stats.csv): descriptive statistics
 - [`outputs/hand_checks.md`](outputs/hand_checks.md): independent recomputations, at least one for every step, all passing
 
@@ -95,9 +95,10 @@ The detailed bank-by-bank values are in [`outputs/ffiec_fdic_comparison.md`](out
 | `car_0_2` | Sum of market-model abnormal returns over the same days; beta from CRSP VW market, trading days −250 to −30 |
 | `kre_beta` | Slope of the bank's daily return on KRE's daily return (SPDR S&P Regional Banking ETF), trading days −250 to −30, at least 150 days. Control for the common regional-bank shock in R5 |
 | `in_sample` | Matched to FDIC, has event returns, and positive equity (333 entities) |
+| `main_sample` | `in_sample` without SVB, the bank whose collapse is the event itself (332 entities). The main regressions run on this (`specs_tried.md` #17) |
 
 ### Threats to validity (so far)
-1. **Failed banks' missing delisting returns.** SVB and Signature stop trading on Mar 10 with no CRSP delisting return. We set it to −100% (shareholders were wiped out), which makes their BHAR about −96%. Dropping them instead (spec R3) cuts the uninsured-deposit coefficient by more than half (−0.15 to −0.06). See `specs_tried.md`.
+1. **Failed banks and the main sample.** SVB and Signature stop trading on Mar 10 with no CRSP delisting return. We set it to −100% (shareholders of a bank in FDIC receivership are wiped out), which makes their BHAR about −96%. **SVB is left out of the main sample** because its collapse is the event, not a response to it; Signature stays in as a bank that the run spread to (`specs_tried.md` #17, instructor audit A2). The estimate depends on these two banks: the uninsured-share coefficient is −0.149 with SVB (R6), −0.112 without it (R1, main), and −0.065 without Signature too (R3). All three are reported here and on the dashboard. We chose the main sample after seeing the audit's leave-out table, and say so in `specs_tried.md`.
 2. **Look-ahead in the data vintage:** the FDIC API serves the current version of Q4 2022 data, which may include amendments filed after March 2023. All 24 fields checked for FRC, SIVB, WAL, and ZION matched the current FFIEC CDR Q4 2022 bulk snapshot exactly. The CDR bulk file is also a current snapshot, so this checks cross-source consistency rather than recovering original filing vintages.
 3. **Loss measure:** `EQCCOMPI` is an annual OCI flow, not accumulated AOCI; the diagnostic column is now `oci_2022_to_equity`. See [Morgan’s reconciliation](docs/zions_measurement.md). Losses on securities moved from AFS to HTM sit in equity (AOCI), not in the HTM gap (Zions shows a negative HTM loss). Securities-only measures also ignore losses on loans.
 4. **Custody banks:** State Street (101%), BNY Mellon (93%), and Citi (82%) have very high uninsured shares, but most of those deposits are operational accounts for institutional clients, which behave differently from a startup's payroll account. One ratio is slightly above 1 because the FDIC's uninsured estimate and domestic deposits are measured differently.

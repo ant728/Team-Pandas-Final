@@ -21,7 +21,7 @@ Outputs:
 import numpy as np
 import pandas as pd
 
-from config import CALL_REPORT_DATE, INSURANCE_LIMIT_THOUSANDS, NIC_DIR, OUTPUTS, PROCESSED, RAW
+from config import CALL_REPORT_DATE, EVENT_TRIGGER_TICKERS, INSURANCE_LIMIT_THOUSANDS, NIC_DIR, OUTPUTS, PROCESSED, RAW
 
 SUM_FIELDS = ["ASSET", "DEP", "DEPDOM", "uninsured", "uninsured_reported", "EQTOT", "EQCCOMPI",
               "SC", "SCHA", "SCHF", "SCAA", "SCAF"]
@@ -137,12 +137,17 @@ def main():
     final["has_returns"] = final["bhar_0_2"].notna()
     final["positive_equity"] = final["EQTOT"] > 0
     final["in_sample"] = final["has_fdic"] & final["has_returns"] & final["positive_equity"]
+    # Main sample (specs_tried.md #17): in_sample minus the bank that triggered the event (SVB).
+    trigger = final["ticker"].isin(EVENT_TRIGGER_TICKERS)
+    assert trigger.sum() == len(EVENT_TRIGGER_TICKERS), "each event-trigger ticker should match exactly one entity"
+    final["main_sample"] = final["in_sample"] & ~trigger
 
     cols = ["rssd_id", "permco", "permno", "ticker", "name", "inst_type", "n_banks", "total_assets_bn",
             "log_assets", "uninsured_dep_share", "share_uninsured_reported", "htm_unrealized_loss_bn",
             "afs_unrealized_loss_bn", "htm_loss_to_equity", "sec_loss_to_equity", "oci_2022_to_equity",
             "htm_share_of_securities", "n_event_days", "delisted_in_window", "dlret_imputed", "beta", "kre_beta", "est_obs",
-            "bhr_0_2", "bhar_0_2", "car_0_2", "has_fdic", "has_returns", "positive_equity", "in_sample"]
+            "bhr_0_2", "bhar_0_2", "car_0_2", "has_fdic", "has_returns", "positive_equity", "in_sample",
+            "main_sample"]
     PROCESSED.mkdir(parents=True, exist_ok=True)
     OUTPUTS.mkdir(parents=True, exist_ok=True)
     m.to_csv(PROCESSED / "bank_measures.csv", index=False)
@@ -150,7 +155,7 @@ def main():
 
     print(f"{len(final)} entities | FDIC match: {final['has_fdic'].sum()} | CRSP event returns: "
           f"{final['has_returns'].sum()} | positive equity: {final['positive_equity'].sum()} | "
-          f"IN SAMPLE: {final['in_sample'].sum()}")
+          f"IN SAMPLE: {final['in_sample'].sum()} | MAIN SAMPLE (without SVB): {final['main_sample'].sum()}")
     old = final["n_banks_old_rule"].fillna(0) > 0
     grew = final[old & (final["n_banks"] > final["n_banks_old_rule"])]
     print(f"FDIC match rate: {old.sum()}/{len(final)} with the top-tier-holder rule -> "
