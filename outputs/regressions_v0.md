@@ -41,3 +41,13 @@ N = 322, R-squared = 0.151
 | uninsured_dep_share | -0.2014 | 0.0939 | -2.14 | 0.032 |
 | htm_loss_to_equity | -0.1283 | 0.1767 | -0.73 | 0.468 |
 | log_assets | -0.0112 | 0.0062 | -1.79 | 0.074 |
+
+## R5 R1 without SVB (event trigger)
+N = 322, R-squared = 0.133
+
+| Variable | Coef | SE | t | p |
+|---|---|---|---|---|
+| Intercept | 0.1813 | 0.0680 | 2.66 | 0.008 |
+| uninsured_dep_share | -0.1113 | 0.0593 | -1.88 | 0.060 |
+| htm_loss_to_equity | -0.0165 | 0.0672 | -0.25 | 0.806 |
+| log_assets | -0.0151 | 0.0042 | -3.62 | 0.000 |

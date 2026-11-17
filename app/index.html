@@ -106,6 +106,29 @@
         <p class="lede">Did banks with more uninsured deposits experience a worse market reaction?</p>
       </div>
       <div id="results-status" class="notice" role="status">Loading the checkpoint data…</div>
+      <article class="card sensitivity-card" aria-labelledby="sensitivity-title">
+        <div class="table-toolbar">
+          <div>
+            <h2 id="sensitivity-title">Dependence on failed-bank outcomes</h2>
+            <p class="muted">Same regression, three samples</p>
+          </div>
+        </div>
+        <p id="regression-status" class="regression-note" role="status">Loading regression comparisons…</p>
+        <div id="regression-table" class="table-scroll" hidden>
+          <table class="sensitivity-table">
+            <caption>Uninsured-deposit share coefficient in the BHAR regression</caption>
+            <thead><tr>
+              <th scope="col">Sample</th>
+              <th scope="col">N</th>
+              <th scope="col">Coefficient</th>
+              <th scope="col">HC3 standard error</th>
+            </tr></thead>
+            <tbody id="regression-rows"></tbody>
+          </table>
+        </div>
+        <p class="regression-note">Each model controls for HTM loss relative to equity and log assets. SVB triggered the event, so excluding it examines the response among the other banks. Excluding both SVB and Signature also removes the two imputed failure outcomes. The scatter below keeps the pipeline’s current analysis sample.</p>
+        <p class="regression-note">HC3 standard errors allow different error variances across banks; they do not correct for a shared regional-bank shock. <a href="../outputs/regressions_v0.csv">View the generated regression output.</a></p>
+      </article>
       <div id="results-grid" class="results-grid" hidden>
         <article class="card chart-card">
           <div class="chart-heading">

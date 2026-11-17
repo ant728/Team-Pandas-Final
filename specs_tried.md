@@ -1,6 +1,6 @@
 # Specifications tried
 
-Every specification we run goes here, including the ones we drop. Count so far: **4 return/measure variants** on the 6-bank proof of concept (Oct 29), plus **2 measurement choices and 4 regressions** on the full sample (Nov 10). Each regression was run once, as listed; none was re-run with different controls or samples beyond what's here.
+Every specification we run goes here, including the ones we drop. Count so far: **4 return/measure variants** on the 6-bank proof of concept (Oct 29), plus **2 measurement choices and 5 regression specifications** on the full sample (four introduced Nov 10, one Nov 17). Rebuilding repeats the listed specifications; no other control or sample variants have been tried.
 
 ## Proof of concept (6 banks, yfinance returns)
 
@@ -21,8 +21,11 @@ Every specification we run goes here, including the ones we drop. Count so far: 
 | 8 | 2026-11-10 | R2: R1 with (HTM + AFS loss)/equity instead | 323 | Uninsured −0.164 (p = 0.03); securities loss +0.005 (p = 0.83) | Robustness |
 | 9 | 2026-11-10 | R3: R1 without SVB and Signature | 321 | Uninsured −0.062 (p = 0.05); HTM loss −0.021 (p = 0.74) | Robustness: **the uninsured effect leans heavily on the two failed banks** |
 | 10 | 2026-11-10 | R4: R1 with market-model CAR as the outcome | 322 | Uninsured −0.201 (p = 0.03); HTM loss −0.128 (p = 0.47) | Robustness |
+| 13 | 2026-11-17 | R5: R1 without SVB (event trigger), retaining Signature and its existing imputed delisting return; same controls and HC3 SEs | In-sample entities with ticker != SIVB (N = 322) | Uninsured −0.1113 (SE 0.0593, p = 0.060); HTM loss −0.0165 (p = 0.806); R² 0.133 | Additional A2 sensitivity; R1 remains the baseline |
 
 **Magnitude (R1):** a one-standard-deviation higher uninsured share (16 pp) goes with a 2.4 pp lower BHAR over the three days. The average bank's BHAR was −10.3%.
+
+**A2 sensitivity recorded November 17, 2026:** R5 was added after reading the instructor audit, including its reported leave-SVB-out estimate. It is motivated by SVB's role as the event trigger, not an independent pre-registered test. Compare R1 (all banks), R5 (without SVB), and R3 (without SVB and Signature) with the same R1 formula and HC3 standard errors. This addition does not change the main sample, the existing R1–R4 specifications, or the delisting-return assumption; the team's final economic justification of the main sample remains a separate decision.
 
 ## Choices fixed before looking at returns
 One exception: the outcome definition itself (compounded BHAR rather than summed CAR) was chosen *after* seeing four banks' event returns in the proof of concept (#1–#3). The reason was mechanical (summing overstates large crashes), but it was not fixed blind.

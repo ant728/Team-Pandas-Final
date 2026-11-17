@@ -17,6 +17,7 @@ SPECS = {
     "R2 BHAR on uninsured share + all securities loss/equity": ("bhar_0_2 ~ uninsured_dep_share + sec_loss_to_equity + log_assets", "all"),
     "R3 R1 without SVB and Signature (imputed -100%)": ("bhar_0_2 ~ uninsured_dep_share + htm_loss_to_equity + log_assets", "no_imputed"),
     "R4 R1 with market-model CAR as the outcome": ("car_0_2 ~ uninsured_dep_share + htm_loss_to_equity + log_assets", "all"),
+    "R5 R1 without SVB (event trigger)": ("bhar_0_2 ~ uninsured_dep_share + htm_loss_to_equity + log_assets", "no_svb"),
 }
 
 
@@ -30,7 +31,14 @@ def main():
 
     rows = []
     for name, (formula, sample) in SPECS.items():
-        data = df if sample == "all" else df[~df["dlret_imputed"].astype(bool)]
+        if sample == "all":
+            data = df
+        elif sample == "no_imputed":
+            data = df[~df["dlret_imputed"].astype(bool)]
+        elif sample == "no_svb":
+            data = df[df["ticker"] != "SIVB"]
+        else:
+            raise ValueError(f"Unknown regression sample: {sample}")
         fit = smf.ols(formula, data=data).fit(cov_type="HC3")
         for var in fit.params.index:
             rows.append({"spec": name, "formula": formula, "variable": var, "coef": fit.params[var],

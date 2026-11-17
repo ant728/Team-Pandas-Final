@@ -15,3 +15,7 @@ R4 R1 with market-model CAR as the outcome,car_0_2 ~ uninsured_dep_share + htm_l
 R4 R1 with market-model CAR as the outcome,car_0_2 ~ uninsured_dep_share + htm_loss_to_equity + log_assets,uninsured_dep_share,-0.2014,0.0939471,-2.14376,0.0320519,322,0.151349
 R4 R1 with market-model CAR as the outcome,car_0_2 ~ uninsured_dep_share + htm_loss_to_equity + log_assets,htm_loss_to_equity,-0.128288,0.176737,-0.725866,0.467921,322,0.151349
 R4 R1 with market-model CAR as the outcome,car_0_2 ~ uninsured_dep_share + htm_loss_to_equity + log_assets,log_assets,-0.0111601,0.00623998,-1.78849,0.0736974,322,0.151349
+R5 R1 without SVB (event trigger),bhar_0_2 ~ uninsured_dep_share + htm_loss_to_equity + log_assets,Intercept,0.181313,0.0680388,2.66485,0.00770222,322,0.133338
+R5 R1 without SVB (event trigger),bhar_0_2 ~ uninsured_dep_share + htm_loss_to_equity + log_assets,uninsured_dep_share,-0.111264,0.0592597,-1.87756,0.0604409,322,0.133338
+R5 R1 without SVB (event trigger),bhar_0_2 ~ uninsured_dep_share + htm_loss_to_equity + log_assets,htm_loss_to_equity,-0.0165387,0.067173,-0.246211,0.805519,322,0.133338
+R5 R1 without SVB (event trigger),bhar_0_2 ~ uninsured_dep_share + htm_loss_to_equity + log_assets,log_assets,-0.0150552,0.00415975,-3.61926,0.000295448,322,0.133338
