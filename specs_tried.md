@@ -91,3 +91,9 @@ The March 9-13 event return is not used to build the 2022 score. These are descr
 | R4 (CAR) | −0.201 (p = 0.032) | −0.198 (SE 0.089, p = 0.026) | HTM loss −0.127 (p = 0.46) |
 
 **R5 (#14), N = 332:** uninsured share −0.142 (SE 0.059, p = 0.016); `kre_beta` −0.158 (SE 0.039, p < 0.001); R² rises from 0.17 to 0.29. Banks that moved more with regional banks before the event fell more during it, but controlling for that leaves the uninsured-share coefficient almost unchanged. This addresses the common-shock concern only partly: it controls for each bank's exposure to the regional-bank factor, but the standard errors still treat residuals as independent.
+
+## Main sample decision (audit A2, written 2026-11-17, before rerunning)
+
+| # | Date | What | Sample / outcome | Decision |
+|---|---|---|---|---|
+| 17 | 2026-11-17 | **Main sample excludes SVB; Signature stays in with its −100% delisting return.** (1) SVB is the event, not a response to it: its Mar 8 announcement and Mar 10 failure *are* the shock, and our question is how the shock spread to *other* banks, so SVB's own return doesn't belong on the left-hand side. (2) Signature is a separate bank that suffered a run after SVB and was closed on Mar 12, the kind of outcome we want to explain, so it stays. (3) −100% is the economically right value for Signature: shareholders of a bank in FDIC receivership are wiped out; CRSP has no delisting return because trading stopped, not because the value is unknown. | Main sample = `in_sample` minus SVB. R1, R2, R4 and R5 run on it. Robustness: R6 = R1 including SVB (the earlier baseline); R3 = R1 also without Signature | Main. **Disclosure:** decided after seeing the instructor audit's leave-out table (and #16), which showed the coefficient weakening without SVB. The reasons above are economic, and all three rows are reported in the README and the dashboard whatever they show |
