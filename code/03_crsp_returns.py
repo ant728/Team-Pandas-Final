@@ -11,7 +11,11 @@ A bank that delists inside the window holds cash for the remaining days.
 
 Secondary outcome: market-model CAR (sum of daily abnormal returns, beta estimated on days -250 to -30).
 
+Common-shock control for spec R5 (instructor audit A3): kre_beta, the slope of the bank's daily return on
+the daily return of KRE (regional-bank ETF) over the same estimation window, with the same minimum of days.
+
 Inputs:  data/raw/crsp/*.csv (licensed; from Prof. Bowen; never committed)
+         data/raw/kre_daily.csv (KRE adjusted closes, from step 2)
 Outputs: data/interim/crsp_event_days.csv   row-level event-day returns (git-ignored, licensed)
          data/processed/bank_returns.csv    one row per bank (PERMNO): computed aggregates only
 """
@@ -19,7 +23,7 @@ import numpy as np
 import pandas as pd
 
 from config import (CRSP_DAILY, CRSP_DELIST, CRSP_MARKET, ESTIMATION_WINDOW, EVENT_DAY0, EVENT_WINDOW,
-                    INTERIM, MIN_EST_OBS, MISSING_DLRET_FAILED, PROCESSED)
+                    INTERIM, KRE_PRICES, MIN_EST_OBS, MISSING_DLRET_FAILED, PROCESSED)
 
 
 def load():
@@ -62,6 +66,11 @@ def main():
     mkt = m.set_index("date")["vwretd"]
     mkt_bhr = (1 + mkt[evt_days]).prod() - 1
 
+    # KRE daily returns. Every estimation day must have one, so no bank's kre_beta rests on a gap.
+    kre = pd.read_csv(KRE_PRICES, parse_dates=["date"]).set_index("date")["close"].sort_index().pct_change()
+    missing_kre = est_days[~est_days.isin(kre.dropna().index)]
+    assert missing_kre.empty, f"KRE returns missing on estimation days: {list(missing_kre.dt.date)}"
+
     evt = d[d["date"].isin(evt_days)].copy()
     evt["rel_day"] = evt["date"].map({dt: i + EVENT_WINDOW[0] for i, dt in enumerate(evt_days)})
     evt["mkt_ret"] = evt["date"].map(mkt)
@@ -81,13 +90,14 @@ def main():
         rec["bhar_0_2"] = rec["bhr_0_2"] - mkt_bhr
 
         est = d[(d["permno"] == permno) & d["date"].isin(est_days)][["date", "ret"]].dropna()
-        est = est.assign(mkt=est["date"].map(mkt))
+        est = est.assign(mkt=est["date"].map(mkt), kre=est["date"].map(kre))
         rec["est_obs"] = len(est)
         if len(est) >= MIN_EST_OBS:
             beta, alpha = np.polyfit(est["mkt"], est["ret"], 1)
             ar = g["r"] - (alpha + beta * g["mkt_ret"])
             rec.update(beta=beta, car_0_2=ar.sum())
             evt.loc[g.index, "ar"] = ar
+            rec["kre_beta"] = np.polyfit(est["kre"], est["ret"], 1)[0]
         rows.append(rec)
 
     out = pd.DataFrame(rows)
