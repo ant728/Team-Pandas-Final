@@ -1,6 +1,6 @@
 # Specifications tried
 
-Every specification we run goes here, including the ones we drop. Count so far: **4 return/measure variants** on the 6-bank proof of concept (Oct 29), plus **2 measurement choices and 5 regression specifications** on the full sample (four introduced Nov 10, one Nov 17). Rebuilding repeats the listed specifications; no other control or sample variants have been tried.
+Every specification we run goes here, including the ones we drop. Each change to the sample, the measures or the regressions is written down and committed **before** it is run (the commit history shows the order). Count so far: **4 return/measure variants** on the 6-bank proof of concept (Oct 29); **10 regressions (R1–R10)** and the measurement choices #5–#6, #13, #15 and #17 on the full sample; Zions diagnostics #11–#12; and the pre-specified out-of-sample screen (#21–#25). No other control, sample or cutoff variants have been tried.
 
 ## Proof of concept (6 banks, yfinance returns)
 
