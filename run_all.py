@@ -11,8 +11,9 @@ STEPS = [
     "03_crsp_returns.py",
     "04_build_dataset.py",
     "05_regressions.py",
-    "06_hand_checks.py",
     "07_zions_reconciliation.py",
+    "08_fragility_screen.py",
+    "06_hand_checks.py",   # runs last so it can recheck every step's output, including step 8
 ]
 
 for step in STEPS:

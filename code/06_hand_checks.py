@@ -149,6 +149,30 @@ check("R1 uninsured-share coefficient, recomputed with numpy", r1["coef"], b[1],
 check("R1 uninsured-share HC3 standard error, recomputed by hand", r1["se"], se_hc3[1], 1e-5,
       "HC3 sandwich formula in numpy: (X'X)^-1 X' diag(e^2/(1-h)^2) X (X'X)^-1")
 
+# --- Step 8, the fragility screen: First Republic's score and post-event return, by hand ------------
+screen = pd.read_csv(OUTPUTS / "fragility_screen.csv").set_index("ticker")
+with open(OUTPUTS / "final_dataset.csv", newline="") as f:
+    rows = [(float(r["uninsured_dep_share"]), float(r["sec_loss_to_equity"]), r["ticker"])
+            for r in csv.DictReader(f) if r["uninsured_dep_share"] and r["sec_loss_to_equity"]]
+frc_vals = [(u, s) for u, s, t in rows if t == "FRC"][0]
+pcts = []
+for j, x in enumerate(frc_vals):
+    below = sum(1 for r in rows if r[j] < x)
+    ties = sum(1 for r in rows if r[j] == x)
+    pcts.append((below + (ties + 1) / 2) / len(rows))     # average rank of the tie group, as a share of N
+check("First Republic screen score, from percentile ranks counted by hand", screen.at["FRC", "score"],
+      sum(pcts) / 2, 1e-6, "plain counts over outputs/final_dataset.csv (entities with both predictors)")
+
+growth = 1.0
+with open(CRSP_DAILY, newline="") as f:
+    for r in csv.DictReader(f):
+        if r["ticker"] == "FRC" and "2023-03-13" < r["date"] <= "2023-12-29":
+            ret = float(r["ret"]) if r["ret"] else 0.0
+            dl = float(r["dlret"]) if r["dlstdt"] == r["date"] and r["dlret"] else 0.0
+            growth *= (1 + ret) * (1 + dl)
+check("First Republic return, Mar 13 close to Dec 29 close (with delisting return)", screen.at["FRC", "post_bhr"],
+      growth - 1, 1e-6, "raw CRSP rows for FRC, including its delisting return")
+
 # --- FDIC API values vs. the FFIEC CDR Q4 2022 bulk file -------------------------------------
 if FFIEC_ZIP.exists():
     ffiec = comparison_table()

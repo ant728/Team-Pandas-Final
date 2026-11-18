@@ -82,6 +82,14 @@ MCAP_DATE = "2022-12-30"              # last trading day before the call report 
 BANK_CENTRIC_MIN_EQ_TO_MCAP = 0.20    # bank subsidiaries' equity / company market value
 BANKING_NAICS_PREFIXES = ("5221", "551111", "551112")  # NIC ACT_PRIM_CD codes that count as banking
 
+# Out-of-sample fragility screen (step 8; rules in specs_tried.md, written 2026-11-10, details #21-#25).
+SCREEN_PREDICTORS = ["uninsured_dep_share", "sec_loss_to_equity"]
+SCREEN_MAIN_CUTOFF = 0.10                  # flag the top 10%; 5% and 20% are secondary only
+SCREEN_CUTOFFS = [0.05, 0.10, 0.20]
+FAILURE_WINDOW = ("2023-03-14", "2023-12-31")
+POST_EVENT_CLOSES = ("2023-03-13", "2023-12-29")   # severe-return outcome: Mar 13 close to Dec 29 close
+SEVERE_LOSS = -0.50
+
 # yfinance is also used as an independent cross-check of CRSP returns in the hand checks.
 CHECK_TICKERS = ["JPM", "WAL", "ZION"]
 PRICE_START = "2023-03-01"

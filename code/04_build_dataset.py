@@ -140,6 +140,8 @@ def main():
     assert uni["rssd_id"].is_unique and uni["permco"].is_unique
 
     banks = assign_entities(bank_level(), uni)
+    # Which bank belongs to which listed entity, for matching failed banks in the screen (step 8).
+    banks[["CERT", "FED_RSSD", "NAME", "rssd_id"]].to_csv(PROCESSED / "bank_entity_map.csv", index=False)
     m = measures(banks)
     rets = pd.read_csv(PROCESSED / "bank_returns.csv")
 

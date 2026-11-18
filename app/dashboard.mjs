@@ -1,4 +1,4 @@
-import { parseDashboardCsv, parseRegressionComparisons } from "./data.mjs";
+import { parseDashboardCsv, parseRegressionComparisons, parseScorecardCsv, parseScreenCsv } from "./data.mjs";
 
 const byId = (id) => document.getElementById(id);
 const pages = ["intro", "method", "results", "screen"];
@@ -12,6 +12,7 @@ let plotted = [];
 let byRssd = new Map();
 let selectedId;
 let sortKey = "uninsured_dep_share";
+let screen = new Map();
 let sortOrder = -1;
 
 const percent = (value) => value == null ? "—" : pct.format(value);
@@ -218,13 +219,17 @@ function renderTable() {
     const tr = element("tr");
     tr.append(bankCell, ...[
       percent(row.uninsured_dep_share), percent(row.sec_loss_to_equity),
-      percent(row.htm_loss_to_equity), assets(row.total_assets_bn), sampleStatus(row),
+      percent(row.htm_loss_to_equity), assets(row.total_assets_bn),
+      row.screen_rank == null ? "—" : "#" + row.screen_rank,
+      row.flag_top10 == null ? "—" : row.flag_top10 ? "Flagged" : "",
+      row.post_bhr == null ? (row.post_missing_reason || "—") : pct.format(row.post_bhr),
+      sampleStatus(row),
     ].map((value) => element("td", value)));
     return tr;
   });
   if (!tableRows.length) {
     const td = element("td", "No matching entities.", "empty-cell");
-    td.colSpan = 6;
+    td.colSpan = 9;
     const tr = element("tr");
     tr.append(td);
     tableRows.push(tr);
@@ -275,9 +280,59 @@ async function start() {
     if (!response.ok) throw new Error("final_dataset.csv returned HTTP " + response.status + ".");
     entities = parseDashboardCsv(await response.text());
     populateDashboard();
+    await loadScreen();
   } catch (error) {
     const message = "Could not load the dashboard data. Run python3 app/serve.py and check outputs/final_dataset.csv. " + error.message;
     for (const id of ["intro-source", "results-status", "screen-status"]) byId(id).textContent = message;
+  }
+}
+
+async function loadScreen() {
+  try {
+    const get = async (file) => {
+      const response = await fetch(new URL("../outputs/" + file, import.meta.url), { cache: "no-store" });
+      if (!response.ok) throw new Error(file + " returned HTTP " + response.status + ".");
+      return response.text();
+    };
+    screen = parseScreenCsv(await get("fragility_screen.csv"));
+    const card = parseScorecardCsv(await get("fragility_screen_scorecard.csv"));
+    for (const row of entities) {
+      const s = screen.get(row.rssd_id);
+      Object.assign(row, s ? { screen_rank: s.rank, flag_top10: s.flag_top10, post_bhr: s.post_bhr,
+        post_missing_reason: s.post_missing_reason } : { screen_rank: null, flag_top10: null, post_bhr: null,
+        post_missing_reason: "not ranked" });
+    }
+    const flagged = [...screen.values()].filter((s) => s.flag_top10).length;
+    byId("screen-summary").textContent = screen.size + " banks ranked; the top 10% flag covers " + flagged + " of them.";
+
+    const named = [["FRC", "First Republic"], ["PACW", "PacWest"]].map(([ticker, label]) => {
+      const row = entities.find((e) => e.ticker === ticker);
+      const s = row && screen.get(row.rssd_id);
+      const tr = element("tr");
+      const th = element("th", label + " (" + ticker + ")");
+      th.scope = "row";
+      const outcome = !s ? "—" : s.fdic_failure ? "Failed " + s.fdic_fail_date + "; stock " + pct.format(s.post_bhr)
+        : s.post_bhr == null ? s.post_missing_reason : "Stock " + pct.format(s.post_bhr) + " by Dec 29";
+      tr.append(th, element("td", s ? "#" + s.rank + " of " + screen.size : "not ranked"),
+        element("td", s ? (s.flag_top10 ? "Yes" : "No") : "—"), element("td", outcome));
+      return tr;
+    });
+    byId("named-rows").replaceChildren(...named);
+
+    const share = new Intl.NumberFormat("en-US", { style: "percent", maximumFractionDigits: 1 });
+    byId("scorecard-rows").replaceChildren(...card.filter((c) => c.cutoff === 0.1).map((c) => {
+      const tr = element("tr");
+      const th = element("th", c.label + (c.missing ? " (" + c.missing + " banks with no return left out)" : ""));
+      th.scope = "row";
+      tr.append(th, element("td", c.events), element("td", c.hits + " of " + c.events + " (" + share.format(c.recall) + ")"),
+        element("td", c.hits + " of " + c.flagged + " (" + share.format(c.precision) + ")"),
+        element("td", share.format(c.base_rate)));
+      return tr;
+    }));
+    byId("screen-tables").hidden = false;
+    renderTable();
+  } catch (error) {
+    byId("screen-summary").textContent = "Screen results unavailable: " + error.message;
   }
 }
 
@@ -317,7 +372,7 @@ byId("sample-filter").addEventListener("change", renderTable);
 byId("bank-select").addEventListener("change", (event) => setBank(event.target.value));
 for (const button of document.querySelectorAll("[data-sort]")) {
   button.addEventListener("click", () => {
-    sortOrder = sortKey === button.dataset.sort ? -sortOrder : button.dataset.sort === "bank" ? 1 : -1;
+    sortOrder = sortKey === button.dataset.sort ? -sortOrder : ["bank", "screen_rank"].includes(button.dataset.sort) ? 1 : -1;
     sortKey = button.dataset.sort;
     renderTable();
   });

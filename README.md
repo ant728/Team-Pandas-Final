@@ -4,7 +4,7 @@
 
 **Team:** Andrew Temo (ant728), Mason Friedman (MasonF9897897), Morgan Waddell (mow228-boop), Ryan Carr (rcarr37)
 
-**Status:** v0 pipeline running on the full sample (333 banks) with CRSP returns. Instructor audit: [`audits/02_instructor_audit.md`](audits/02_instructor_audit.md). Next: Checkpoint 3 (Sat Nov 21). Our Checkpoint 1 memo is [`STATUS.md`](STATUS.md).
+**Status:** v1: the March 2023 event study on the full sample (333 banks) plus the out-of-sample who's-next screen ([`outputs/fragility_screen.md`](outputs/fragility_screen.md)). Instructor audit: [`audits/02_instructor_audit.md`](audits/02_instructor_audit.md). Next: Checkpoint 3 (Sat Nov 21). Our Checkpoint 1 memo is [`STATUS.md`](STATUS.md).
 
 ## Our project: bank fragility (Seed 6)
 
@@ -24,6 +24,7 @@ Current outputs:
 - [`outputs/final_dataset.csv`](outputs/final_dataset.csv): all 343 entities, with flags for why any are out of the sample
 - [`outputs/regressions_v0.md`](outputs/regressions_v0.md): the cross-sectional regressions, with magnitudes. **Main result (R1, 332 banks, SVB left out as the trigger):** a one-SD higher uninsured share (16 pp of domestic deposits) goes with a 1.8 pp lower three-day BHAR (coefficient −0.112, p = 0.047); the average bank's BHAR was −10.0%. With SVB included it's −0.149 (p = 0.023); without SVB and Signature, −0.065 (p = 0.032).
 - [`outputs/summary_stats.csv`](outputs/summary_stats.csv): descriptive statistics
+- [`outputs/fragility_screen.md`](outputs/fragility_screen.md): **who's next.** A screen built only from Dec 2022 call reports (uninsured share and securities losses, top 10% flagged) flags First Republic (rank 28 of 337), the only listed bank that failed after Mar 13, 2023, but not PacWest (rank 65). It catches 2 of the 4 stocks that lost half their value by year-end. The flagged group's precision is low (1 failure among 34 flags), so this is a shortlist, not a forecast. Rules written before ranking: `specs_tried.md`.
 - [`outputs/hand_checks.md`](outputs/hand_checks.md): independent recomputations, at least one for every step, all passing
 
 ### Checkpoint 2 dashboard
@@ -40,13 +41,14 @@ CSV. See [dashboard instructions](app/README.md) for the data contract.
 | Step | Script | Reads | Writes |
 |---|---|---|---|
 | 0 | `code/00_build_universe.py` | NY Fed CRSP–FRB link | `data/processed/universe_20221231.csv` (one row per entity), `requests/crsp_permcos.csv` |
-| 1 | `code/01_download_fdic.py` | FDIC API | `data/raw/fdic_financials_20221231.csv` (one row per bank), `data/raw/fdic_institutions.csv` |
+| 1 | `code/01_download_fdic.py` | FDIC API | `data/raw/fdic_financials_20221231.csv` (one row per bank), `data/raw/fdic_institutions.csv`, `data/raw/fdic_failures_2023.csv` |
 | 2 | `code/02_download_prices.py` | yfinance | `data/raw/kre_daily.csv` (KRE, for `kre_beta`), `data/raw/prices_check.csv` (3 banks, cross-check only) |
 | 3 | `code/03_crsp_returns.py` | `data/raw/crsp/`, KRE | `data/processed/bank_returns.csv` (one row per bank: BHAR, CAR, market beta, KRE beta), `data/interim/crsp_event_days.csv` (git-ignored) |
-| 4 | `code/04_build_dataset.py` | steps 0, 1, 3, NIC relationships | `data/processed/bank_measures.csv`, `outputs/final_dataset.csv` |
+| 4 | `code/04_build_dataset.py` | steps 0, 1, 3, NIC files | `data/processed/bank_measures.csv`, `data/processed/bank_entity_map.csv`, `outputs/final_dataset.csv` |
 | 5 | `code/05_regressions.py` | `outputs/final_dataset.csv` | `outputs/regressions_v0.*`, `outputs/summary_stats.csv` |
-| 6 | `code/06_hand_checks.py` | raw files, outputs | `outputs/hand_checks.md` |
+| 6 | `code/06_hand_checks.py` | raw files, outputs | `outputs/hand_checks.md` (`run_all.py` runs this step **last**, so it can recheck step 8 too) |
 | 7 | `code/07_zions_reconciliation.py` | sourced Zions disclosures and raw FDIC report | `outputs/zions_reconciliation.csv`, `outputs/zions_measure_comparison.csv` |
+| 8 | `code/08_fragility_screen.py` | `outputs/final_dataset.csv`, FDIC failures, CRSP after Mar 13 | `outputs/fragility_screen.csv` (one row per bank), `outputs/fragility_screen.md` (report), `outputs/fragility_screen_scorecard.csv` |
 
 Settings (event dates, windows, call report quarter, field list, delisting assumption) live in one place: `code/config.py`.
 
@@ -60,6 +62,7 @@ Settings (event dates, windows, call report quarter, field list, delisting assum
 | Sample universe (bank ↔ CRSP link) | NY Fed CRSP–FRB link, Sep 30, 2024 vintage ([page](https://www.newyorkfed.org/research/banking_research/crsp-frb)) | `code/00_build_universe.py` | See `data/provenance_log.csv` |
 | Call report fields, Q4 2022, all banks | FDIC BankFind API, `https://api.fdic.gov/banks/financials` ([field definitions](https://api.fdic.gov/banks/docs/risview_properties.yaml)) | `code/01_download_fdic.py` | See `data/provenance_log.csv` (logs the API's data vintage too) |
 | Bank IDs (CERT → RSSD) | FDIC BankFind API, `https://api.fdic.gov/banks/institutions` | `code/01_download_fdic.py` | See `data/provenance_log.csv` |
+| 2023 bank failures | FDIC BankFind API, `https://api.fdic.gov/banks/failures` | `code/01_download_fdic.py` | See `data/provenance_log.csv` |
 | CRSP daily returns, delistings, market return | Pulled by Prof. Bowen from WRDS (legacy CRSP daily: `dsf`, `dsenames`, `dsedelist`, `dsi`) on 2026-11-06, at our request: the 343 PERMCOs in `requests/crsp_permcos.csv`, Jan 2022–Dec 2023; variables RET, RETX, DLRET/DLSTCD (delisting), PRC, SHROUT, VOL, TICKER, COMNAM, SHRCD, EXCHCD, and VWRETD (market) | With WRDS access, run [`code/wrds/pull_crsp.do`](code/wrds/pull_crsp.do) (the Stata script used for the pull) next to `requests/crsp_permcos.csv` | Received Nov 10, 2026 |
 | KRE daily prices (regional-bank index for `kre_beta`) | yfinance (adjusted closes), Jan 2022–Mar 2023 | `code/02_download_prices.py` | See `data/provenance_log.csv` |
 | Prices for 3 banks (cross-check only) | yfinance (adjusted closes) | `code/02_download_prices.py` | See `data/provenance_log.csv` |
