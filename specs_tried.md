@@ -110,3 +110,10 @@ The March 9-13 event return is not used to build the 2022 score. These are descr
 | R6 | including SVB (earlier baseline) | 333 | −0.149 (0.066) | 0.023 |
 
 Magnitude (R1): a one-SD higher uninsured share (16.0 pp) goes with a 1.8 pp lower BHAR; the average main-sample bank's BHAR was −10.0%. The loss measures stay insignificant in every spec. The main estimate is about three-quarters of the old baseline, and only just clears 5%.
+
+## Part A robustness for v1 (written 2026-11-18, before running)
+
+| # | Date | What | Sample / outcome | Decision |
+|---|---|---|---|---|
+| 18 | 2026-11-18 | **R7: window that ends before the rescue.** R1 with `bhar_0_1` as the outcome: buy-and-hold abnormal return over trading days 0 to +1 (Mar 9 and 10), computed exactly like `bhar_0_2` but stopping before the Sunday, Mar 12 deposit guarantee and BTFP (README threat 9). | Main sample (#17) | Robustness. Report whether the uninsured-share coefficient keeps its sign and significance, whichever way it goes |
+| 19 | 2026-11-18 | **R8, R9: winsorized ratios.** R1 (R8) and R2 (R9) with `uninsured_dep_share`, `htm_loss_to_equity` and `sec_loss_to_equity` winsorized at their 1st and 99th percentiles, computed on the main sample. Targets the extreme loss ratios (README threat 5: First American at 29× equity). The 1/99 cutoff is the one written in the self-audit plan on Nov 12. | Main sample (#17) | Robustness. Report both, whichever way they go; no other cutoffs will be tried |
