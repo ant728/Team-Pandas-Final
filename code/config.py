@@ -55,6 +55,7 @@ CRSP_DELIST = CRSP_DIR / "crsp_delistings.csv"
 # Day 0 is the first trading day after that news.
 EVENT_DAY0 = "2023-03-09"
 EVENT_WINDOW = (0, 2)            # Mar 9, Mar 10 (SVB closed by regulators), Mar 13 (Signature closed Sunday)
+PRE_RESCUE_LAST_DAY = 1         # R7 (specs_tried.md #18): days 0 to +1 = Mar 9-10, before the Mar 12 rescue
 ESTIMATION_WINDOW = (-250, -30)  # trading days relative to day 0, for the market model
 MIN_EST_OBS = 150
 

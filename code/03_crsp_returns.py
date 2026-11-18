@@ -9,6 +9,9 @@ Delistings: on a bank's delisting date, its return is (1 + ret) * (1 + dlret) - 
 delisted Mar 10 with no CRSP delisting return; we set it to MISSING_DLRET_FAILED (-100%, equity wiped out).
 A bank that delists inside the window holds cash for the remaining days.
 
+Pre-rescue outcome for R7 (specs_tried.md #18): bhar_0_1, the same BHAR over days 0 to +1 only (Mar 9-10),
+ending before the Sunday, Mar 12 deposit guarantee and BTFP.
+
 Secondary outcome: market-model CAR (sum of daily abnormal returns, beta estimated on days -250 to -30).
 
 Common-shock control for spec R5 (instructor audit A3): kre_beta, the slope of the bank's daily return on
@@ -23,7 +26,7 @@ import numpy as np
 import pandas as pd
 
 from config import (CRSP_DAILY, CRSP_DELIST, CRSP_MARKET, ESTIMATION_WINDOW, EVENT_DAY0, EVENT_WINDOW,
-                    INTERIM, KRE_PRICES, MIN_EST_OBS, MISSING_DLRET_FAILED, PROCESSED)
+                    INTERIM, KRE_PRICES, MIN_EST_OBS, MISSING_DLRET_FAILED, PRE_RESCUE_LAST_DAY, PROCESSED)
 
 
 def load():
@@ -65,6 +68,8 @@ def main():
     est_days = cal.iloc[p0 + ESTIMATION_WINDOW[0]: p0 + ESTIMATION_WINDOW[1] + 1]
     mkt = m.set_index("date")["vwretd"]
     mkt_bhr = (1 + mkt[evt_days]).prod() - 1
+    pre_rescue_days = evt_days.iloc[: PRE_RESCUE_LAST_DAY - EVENT_WINDOW[0] + 1]
+    mkt_bhr_0_1 = (1 + mkt[pre_rescue_days]).prod() - 1
 
     # KRE daily returns. Every estimation day must have one, so no bank's kre_beta rests on a gap.
     kre = pd.read_csv(KRE_PRICES, parse_dates=["date"]).set_index("date")["close"].sort_index().pct_change()
@@ -88,6 +93,9 @@ def main():
                "dlret_imputed": bool(g["dlret_imputed"].any())}
         rec["bhr_0_2"] = (1 + g["r"]).prod() - 1      # days after a delisting earn 0 (cash)
         rec["bhar_0_2"] = rec["bhr_0_2"] - mkt_bhr
+        pre = g[g["rel_day"] <= PRE_RESCUE_LAST_DAY]
+        rec["bhr_0_1"] = (1 + pre["r"]).prod() - 1
+        rec["bhar_0_1"] = rec["bhr_0_1"] - mkt_bhr_0_1
 
         est = d[(d["permno"] == permno) & d["date"].isin(est_days)][["date", "ret"]].dropna()
         est = est.assign(mkt=est["date"].map(mkt), kre=est["date"].map(kre))

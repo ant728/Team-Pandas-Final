@@ -82,18 +82,19 @@ for t in ["JPM", "WAL", "ZION"]:
     check(name, final.at[t, "bhr_0_2"], yf_bhr, 0.005, "yfinance adjusted closes (independent source)")
 
 # --- WAL's BHAR recomputed from the raw CRSP rows with a plain loop --------------------------
-days = ["2023-03-09", "2023-03-10", "2023-03-13"]
-wal, mkt = 1.0, 1.0
-with open(CRSP_DAILY, newline="") as f:
-    for r in csv.DictReader(f):
-        if r["ticker"] == "WAL" and r["date"] in days:
-            wal *= 1 + float(r["ret"])
-with open(CRSP_MARKET, newline="") as f:
-    for r in csv.DictReader(f):
-        if r["date"] in days:
-            mkt *= 1 + float(r["vwretd"])
-check("WAL BHAR[0,+2], recomputed from raw CRSP rows", final.at["WAL", "bhar_0_2"], (wal - 1) - (mkt - 1), 1e-4,
-      "crsp_daily_2022_2023.csv and crsp_market_vwretd.csv")
+for col, days in [("bhar_0_2", ["2023-03-09", "2023-03-10", "2023-03-13"]),
+                  ("bhar_0_1", ["2023-03-09", "2023-03-10"])]:  # R7's pre-rescue window (specs_tried.md #18)
+    wal, mkt = 1.0, 1.0
+    with open(CRSP_DAILY, newline="") as f:
+        for r in csv.DictReader(f):
+            if r["ticker"] == "WAL" and r["date"] in days:
+                wal *= 1 + float(r["ret"])
+    with open(CRSP_MARKET, newline="") as f:
+        for r in csv.DictReader(f):
+            if r["date"] in days:
+                mkt *= 1 + float(r["vwretd"])
+    check(f"WAL {col}, recomputed from raw CRSP rows", final.at["WAL", col], (wal - 1) - (mkt - 1), 1e-4,
+          "crsp_daily_2022_2023.csv and crsp_market_vwretd.csv")
 
 # --- WAL's KRE beta (spec R5) recomputed as cov/var with a plain loop --------------------------
 kre_px = {}

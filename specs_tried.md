@@ -117,3 +117,15 @@ Magnitude (R1): a one-SD higher uninsured share (16.0 pp) goes with a 1.8 pp low
 |---|---|---|---|---|
 | 18 | 2026-11-18 | **R7: window that ends before the rescue.** R1 with `bhar_0_1` as the outcome: buy-and-hold abnormal return over trading days 0 to +1 (Mar 9 and 10), computed exactly like `bhar_0_2` but stopping before the Sunday, Mar 12 deposit guarantee and BTFP (README threat 9). | Main sample (#17) | Robustness. Report whether the uninsured-share coefficient keeps its sign and significance, whichever way it goes |
 | 19 | 2026-11-18 | **R8, R9: winsorized ratios.** R1 (R8) and R2 (R9) with `uninsured_dep_share`, `htm_loss_to_equity` and `sec_loss_to_equity` winsorized at their 1st and 99th percentiles, computed on the main sample. Targets the extreme loss ratios (README threat 5: First American at 29× equity). The 1/99 cutoff is the one written in the self-audit plan on Nov 12. | Main sample (#17) | Robustness. Report both, whichever way they go; no other cutoffs will be tried |
+
+**Results of #18–#19 (run 2026-11-18, after the entries above were committed).** Main sample, HC3:
+
+| Spec | N | Uninsured share coef (SE) | p | Loss measure |
+|---|---|---|---|---|
+| R1 (main, Mar 9–13) | 332 | −0.112 (0.056) | 0.047 | HTM −0.017 (p = 0.80) |
+| **R7 (Mar 9–10 only)** | 332 | **−0.053 (0.057)** | **0.346** | HTM −0.009 (p = 0.82) |
+| R8 (R1, winsorized) | 332 | −0.113 (0.054) | 0.037 | HTM −0.052 (p = 0.34) |
+| R9 (R2, winsorized) | 332 | −0.115 (0.054) | 0.033 | securities +0.011 (p = 0.60) |
+
+- **R7:** before the rescue, the uninsured-share coefficient is less than half of R1's and not significant. The cross-sectional sorting on uninsured deposits shows up on **Monday, Mar 13**, the first trading day *after* the deposit guarantee and BTFP. The average bank's BHAR was −3.9% over Mar 9–10 and −10.2% over Mar 9–13, so most of the decline came on Monday too. We report this as it is: the main result is a Monday effect, which fits contagion to similar banks (First Republic, PacWest and Western Alliance fell hardest that day) more than a reaction to SVB's news alone.
+- **R8–R9:** winsorizing 4–8 extreme values per ratio leaves the uninsured coefficient unchanged, and the loss measures stay insignificant.

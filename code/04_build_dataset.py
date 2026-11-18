@@ -146,7 +146,7 @@ def main():
             "log_assets", "uninsured_dep_share", "share_uninsured_reported", "htm_unrealized_loss_bn",
             "afs_unrealized_loss_bn", "htm_loss_to_equity", "sec_loss_to_equity", "oci_2022_to_equity",
             "htm_share_of_securities", "n_event_days", "delisted_in_window", "dlret_imputed", "beta", "kre_beta", "est_obs",
-            "bhr_0_2", "bhar_0_2", "car_0_2", "has_fdic", "has_returns", "positive_equity", "in_sample",
+            "bhr_0_2", "bhar_0_2", "bhr_0_1", "bhar_0_1", "car_0_2", "has_fdic", "has_returns", "positive_equity", "in_sample",
             "main_sample"]
     PROCESSED.mkdir(parents=True, exist_ok=True)
     OUTPUTS.mkdir(parents=True, exist_ok=True)
