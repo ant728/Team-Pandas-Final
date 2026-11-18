@@ -18,7 +18,7 @@
 3. Download three FFIEC NIC files (CSV) from the [NIC data download page](https://www.ffiec.gov/npw/FinancialReport/DataDownload), **Relationships**, **Attributes- Active** and **Attributes- Closed**, and save the ZIPs in `data/raw/nic/` with their default names. It's public, but the site blocks scripts with a CAPTCHA, so this is a manual step.
 4. `python run_all.py`
 
-`run_all.py` downloads everything else, builds the dataset, runs the regressions, and runs the hand checks. It stops if any check fails. If yfinance can't deliver the three cross-check banks, the run continues and those checks are marked SKIPPED. KRE (the regional-bank ETF used for `kre_beta`) is required: step 2 retries it, then stops if it still fails.
+`run_all.py` downloads everything else, builds the dataset, runs the regressions, and runs the hand checks. It stops if any check fails. If yfinance can't deliver the three cross-check banks, the run continues and those checks are marked SKIPPED. KRE's daily prices (the regional-bank ETF used for `kre_beta`) are **committed** in `data/raw/kre_daily.csv`, because yfinance re-adjusts them slightly on every download; step 2 doesn't re-download them, and step 3 stops if the file's sha256 doesn't match `config.KRE_SHA256`.
 
 Current outputs:
 - [`outputs/final_dataset.csv`](outputs/final_dataset.csv): all 343 entities, with flags for why any are out of the sample
@@ -64,13 +64,13 @@ Settings (event dates, windows, call report quarter, field list, delisting assum
 | Bank IDs (CERT → RSSD) | FDIC BankFind API, `https://api.fdic.gov/banks/institutions` | `code/01_download_fdic.py` | See `data/provenance_log.csv` |
 | 2023 bank failures | FDIC BankFind API, `https://api.fdic.gov/banks/failures` | `code/01_download_fdic.py` | See `data/provenance_log.csv` |
 | CRSP daily returns, delistings, market return | Pulled by Prof. Bowen from WRDS (legacy CRSP daily: `dsf`, `dsenames`, `dsedelist`, `dsi`) on 2026-11-06, at our request: the 343 PERMCOs in `requests/crsp_permcos.csv`, Jan 2022–Dec 2023; variables RET, RETX, DLRET/DLSTCD (delisting), PRC, SHROUT, VOL, TICKER, COMNAM, SHRCD, EXCHCD, and VWRETD (market) | With WRDS access, run [`code/wrds/pull_crsp.do`](code/wrds/pull_crsp.do) (the Stata script used for the pull) next to `requests/crsp_permcos.csv` | Received Nov 10, 2026 |
-| KRE daily prices (regional-bank index for `kre_beta`) | yfinance (adjusted closes), Jan 2022–Mar 2023 | `code/02_download_prices.py` | See `data/provenance_log.csv` |
+| KRE daily prices (regional-bank index for `kre_beta`) | yfinance (adjusted closes), Jan 2022–Mar 2023 | **Committed** in `data/raw/kre_daily.csv` (sha256 in `code/config.py`). To re-download: `python code/02_download_prices.py --refresh-kre`, which will change `kre_beta` slightly | Downloaded Nov 18, 2026 (see `data/provenance_log.csv`) |
 | Prices for 3 banks (cross-check only) | yfinance (adjusted closes) | `code/02_download_prices.py` | See `data/provenance_log.csv` |
 | Each company's primary activity (NAICS), for R10 | FFIEC NIC Attributes- Active and Attributes- Closed files (CSV) | Manual (CAPTCHA), same page as the relationships file; save both ZIPs in `data/raw/nic/` | Downloaded Nov 18, 2026 (see `data/provenance_log.csv`) |
 | Ownership links (who controls which bank, with dates) | FFIEC National Information Center (NIC), Relationships file (CSV) | Manual (CAPTCHA): on the [NIC data download page](https://www.ffiec.gov/npw/FinancialReport/DataDownload), click CSV → Relationships and save the ZIP in `data/raw/nic/` | Downloaded Nov 17, 2026 (see `data/provenance_log.csv`) |
 | Q4 2022 FFIEC comparison file | FFIEC CDR Bulk Data, Call Reports -- Single Period | On the CDR page, select Call Reports -- Single Period, report date 12/31/2022, and Tab Delimited. Download the ZIP and save as `data/raw/ffiec_call_20221231.zip`. | Downloaded Nov 10, 2026 |
 
-`data/raw/` and `data/interim/` are git-ignored. The scripts recreate them, except the CRSP files (licensed, from Prof. Bowen) and the two manual FFIEC downloads (NIC relationships, and the optional CDR comparison file). **Licensing:** we publish only results computed from CRSP (BHARs, CARs, betas, regressions), never CRSP rows (daily returns, prices, shares outstanding). That includes anything the dashboard loads.
+`data/raw/` (except `kre_daily.csv`, above) and `data/interim/` are git-ignored. The scripts recreate them, except the CRSP files (licensed, from Prof. Bowen) and the two manual FFIEC downloads (NIC relationships, and the optional CDR comparison file). **Licensing:** we publish only results computed from CRSP (BHARs, CARs, betas, regressions), never CRSP rows (daily returns, prices, shares outstanding). That includes anything the dashboard loads.
 
 ### FDIC API vs. FFIEC check
 

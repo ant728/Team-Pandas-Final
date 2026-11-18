@@ -1,5 +1,9 @@
-# Raw data stays out of git. The download code recreates everything except the licensed CRSP files (see README).
-data/raw/
+# Raw data stays out of git, with one exception. The download code recreates everything except the licensed
+# CRSP files and the manual FFIEC NIC downloads (see README "How to run").
+data/raw/*
+# Exception: KRE's daily prices (312 rows of public ETF prices) are committed, because yfinance's adjusted closes
+# shift slightly on every download, which made kre_beta and R5 change between runs (audits/04_self_audit.md, C).
+!data/raw/kre_daily.csv
 
 # Secrets: never commit API keys
 .env

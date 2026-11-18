@@ -23,11 +23,13 @@ Outputs: data/interim/crsp_event_days.csv   row-level event-day returns (git-ign
          data/interim/mcap_20221230.csv      market value per PERMCO on Dec 30, 2022, for R10 (git-ignored)
          data/processed/bank_returns.csv    one row per bank (PERMNO): computed aggregates only
 """
+import hashlib
+
 import numpy as np
 import pandas as pd
 
 from config import (CRSP_DAILY, CRSP_DELIST, CRSP_MARKET, ESTIMATION_WINDOW, EVENT_DAY0, EVENT_WINDOW,
-                    INTERIM, KRE_PRICES, MCAP_DATE, MIN_EST_OBS, MISSING_DLRET_FAILED, PRE_RESCUE_LAST_DAY, PROCESSED)
+                    INTERIM, KRE_PRICES, KRE_SHA256, MCAP_DATE, MIN_EST_OBS, MISSING_DLRET_FAILED, PRE_RESCUE_LAST_DAY, PROCESSED)
 
 
 def load():
@@ -72,7 +74,11 @@ def main():
     pre_rescue_days = evt_days.iloc[: PRE_RESCUE_LAST_DAY - EVENT_WINDOW[0] + 1]
     mkt_bhr_0_1 = (1 + mkt[pre_rescue_days]).prod() - 1
 
-    # KRE daily returns. Every estimation day must have one, so no bank's kre_beta rests on a gap.
+    # KRE daily returns, from the committed file that built the outputs (a re-download would differ slightly).
+    sha = hashlib.sha256(KRE_PRICES.read_bytes()).hexdigest()
+    assert sha == KRE_SHA256, (f"{KRE_PRICES.name} isn't the committed version (sha256 {sha[:12]}...). Restore it with "
+                               "`git checkout data/raw/kre_daily.csv`, or update KRE_SHA256 in config.py on purpose.")
+    # Every estimation day must have a KRE return, so no bank's kre_beta rests on a gap.
     kre = pd.read_csv(KRE_PRICES, parse_dates=["date"]).set_index("date")["close"].sort_index().pct_change()
     missing_kre = est_days[~est_days.isin(kre.dropna().index)]
     assert missing_kre.empty, f"KRE returns missing on estimation days: {list(missing_kre.dt.date)}"

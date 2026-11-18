@@ -71,7 +71,8 @@ MISSING_DLRET_FAILED = -1.0
 KRE_TICKER = "KRE"
 KRE_START = "2022-01-01"   # covers the estimation window (trading days -250 to -30 before Mar 9, 2023)
 KRE_END = "2023-03-31"
-KRE_PRICES = RAW / "kre_daily.csv"
+KRE_PRICES = RAW / "kre_daily.csv"   # committed to git (the one raw file that is): yfinance re-adjusts it on every download
+KRE_SHA256 = "9a1066c131e9a4fb4f585f48b8685ca5ea5afdcf67dfe19e4f7569ca5d2af046"  # the file that built the outputs
 
 # Main sample (specs_tried.md #17, instructor audit A2): SVB is the event itself, not a response to it,
 # so it is left out of the main sample. Signature stays in, with its -100% delisting return.

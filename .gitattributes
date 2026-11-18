@@ -1,0 +1,3 @@
+# Store the committed KRE prices byte-for-byte (no line-ending conversion), so their sha256 check in step 3
+# passes on every operating system.
+data/raw/kre_daily.csv -text
