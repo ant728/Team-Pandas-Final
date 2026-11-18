@@ -20,13 +20,14 @@ the daily return of KRE (regional-bank ETF) over the same estimation window, wit
 Inputs:  data/raw/crsp/*.csv (licensed; from Prof. Bowen; never committed)
          data/raw/kre_daily.csv (KRE adjusted closes, from step 2)
 Outputs: data/interim/crsp_event_days.csv   row-level event-day returns (git-ignored, licensed)
+         data/interim/mcap_20221230.csv      market value per PERMCO on Dec 30, 2022, for R10 (git-ignored)
          data/processed/bank_returns.csv    one row per bank (PERMNO): computed aggregates only
 """
 import numpy as np
 import pandas as pd
 
 from config import (CRSP_DAILY, CRSP_DELIST, CRSP_MARKET, ESTIMATION_WINDOW, EVENT_DAY0, EVENT_WINDOW,
-                    INTERIM, KRE_PRICES, MIN_EST_OBS, MISSING_DLRET_FAILED, PRE_RESCUE_LAST_DAY, PROCESSED)
+                    INTERIM, KRE_PRICES, MCAP_DATE, MIN_EST_OBS, MISSING_DLRET_FAILED, PRE_RESCUE_LAST_DAY, PROCESSED)
 
 
 def load():
@@ -116,6 +117,12 @@ def main():
     evt[["permno", "permco", "ticker", "date", "rel_day", "ret", "dlret", "dlret_imputed", "r", "mkt_ret", "ar"]] \
         .to_csv(INTERIM / "crsp_event_days.csv", index=False)
     out.to_csv(PROCESSED / "bank_returns.csv", index=False)
+
+    # Market value on Dec 30, 2022 (price x shares, summed over a company's share classes), for the
+    # bank-centric sample in R10. CRSP-derived, so it stays in data/interim/ (git-ignored).
+    day = d[d["date"] == pd.Timestamp(MCAP_DATE)]
+    mcap = (day["prc"].abs() * day["shrout"]).groupby(day["permco"]).sum(min_count=1).rename("mcap_thousands")
+    mcap.to_csv(INTERIM / "mcap_20221230.csv")
 
     print(f"market BHR over {evt_days.iloc[0]:%b %d}-{evt_days.iloc[-1]:%b %d}: {mkt_bhr:.2%}")
     print(f"{len(out)} banks with event-window returns; "

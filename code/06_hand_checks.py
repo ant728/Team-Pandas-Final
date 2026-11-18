@@ -10,7 +10,7 @@ import numpy as np
 import pandas as pd
 
 from config import (CALL_REPORT_DATE, CRSP_DAILY, CRSP_MARKET, ESTIMATION_WINDOW, EVENT_DAY0, INSURANCE_LIMIT_THOUSANDS,
-                    KRE_PRICES, NIC_DIR, OUTPUTS, RAW)
+                    KRE_PRICES, NIC_RELATIONSHIPS, OUTPUTS, RAW)
 from ffiec_comparison import FFIEC_ZIP, comparison_table, write_report as write_ffiec_report
 
 final = pd.read_csv(OUTPUTS / "final_dataset.csv").set_index("ticker")
@@ -49,7 +49,7 @@ check("JPM total assets ($B), summed by hand", final.at["JPM", "total_assets_bn"
 # --- NIC link (instructor audit A4): TFS Financial, a listed company under a mutual holding company --
 # The old rule (top-tier holder) missed it. Rebuild its assets from the raw NIC and FDIC files with plain loops.
 tfsl = int(final.at["TFSL", "rssd_id"])
-with zipfile.ZipFile(next(NIC_DIR.glob("*.zip"))) as z, z.open(z.namelist()[0]) as f:
+with zipfile.ZipFile(NIC_RELATIONSHIPS) as z, z.open(z.namelist()[0]) as f:
     kids = {int(r["ID_RSSD_OFFSPRING"]) for r in csv.DictReader(io.TextIOWrapper(f, encoding="utf-8-sig"))
             if int(r["#ID_RSSD_PARENT"]) == tfsl and r["CTRL_IND"] == "1"
             and int(r["DT_START"]) <= d <= int(r["DT_END"])}
@@ -59,6 +59,16 @@ with open(RAW / f"fdic_financials_{CALL_REPORT_DATE}.csv", newline="") as f:
     tfsl_assets = sum(float(r["ASSET"]) for r in csv.DictReader(f) if r["CERT"] in certs) / 1e6
 check("TFS Financial total assets ($B), via NIC ownership rows", final.at["TFSL", "total_assets_bn"], tfsl_assets, 1e-3,
       "raw NIC relationships (banks TFS Financial controls on 2022-12-31) and raw FDIC rows")
+
+# --- Bank-centric rule (R10): Schwab's bank equity / market value, from raw FDIC and CRSP rows --
+schw = final.at["SCHW", "rssd_id"]
+with open(RAW / f"fdic_financials_{CALL_REPORT_DATE}.csv", newline="") as f:
+    schw_eq = sum(float(r["EQTOT"]) for r in csv.DictReader(f) if r["RSSDHCR"] and int(float(r["RSSDHCR"])) == schw)
+with open(CRSP_DAILY, newline="") as f:
+    schw_mcap = sum(abs(float(r["prc"])) * float(r["shrout"]) for r in csv.DictReader(f)
+                    if r["ticker"] == "SCHW" and r["date"] == "2022-12-30")
+check("Schwab bank equity / market value (bank-centric rule, R10)", final.at["SCHW", "bank_eq_to_mcap"],
+      schw_eq / schw_mcap, 1e-6, "raw FDIC rows with RSSDHCR = Schwab, and CRSP price x shares on 2022-12-30")
 
 # --- Uninsured-deposit approximation vs. the reported estimate -------------------------------
 fin = pd.read_csv(RAW / f"fdic_financials_{CALL_REPORT_DATE}.csv")

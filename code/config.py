@@ -19,6 +19,8 @@ NYFED_LINK_VINTAGE_END = 20240930  # last date covered by this vintage; links en
 # specs_tried.md #13). Manual download (the FFIEC site blocks scripts with a CAPTCHA):
 # https://www.ffiec.gov/npw/FinancialReport/DataDownload -> "Relationships" (CSV). Save the ZIP in data/raw/nic/.
 NIC_DIR = RAW / "nic"
+NIC_RELATIONSHIPS = NIC_DIR / "CSV_RELATIONSHIPS.zip"   # who controls whom, with dates (A4)
+# The attributes files (CSV_ATTRIBUTES_ACTIVE.zip, CSV_ATTRIBUTES_CLOSED.zip) give each entity's primary activity (R10).
 
 # Call report quarter: the last one public BEFORE the event.
 # Q4 2022 call reports were due Jan 30, 2023, well before SVB's Mar 8, 2023 announcement.
@@ -74,6 +76,11 @@ KRE_PRICES = RAW / "kre_daily.csv"
 # Main sample (specs_tried.md #17, instructor audit A2): SVB is the event itself, not a response to it,
 # so it is left out of the main sample. Signature stays in, with its -100% delisting return.
 EVENT_TRIGGER_TICKERS = ["SIVB"]
+
+# Bank-centric sample for R10 (specs_tried.md #20): drop entities whose banks are a small part of the company.
+MCAP_DATE = "2022-12-30"              # last trading day before the call report date's quarter ended
+BANK_CENTRIC_MIN_EQ_TO_MCAP = 0.20    # bank subsidiaries' equity / company market value
+BANKING_NAICS_PREFIXES = ("5221", "551111", "551112")  # NIC ACT_PRIM_CD codes that count as banking
 
 # yfinance is also used as an independent cross-check of CRSP returns in the hand checks.
 CHECK_TICKERS = ["JPM", "WAL", "ZION"]

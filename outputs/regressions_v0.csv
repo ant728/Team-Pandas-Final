@@ -15,11 +15,11 @@ R4 R1 with market-model CAR as the outcome,car_0_2 ~ uninsured_dep_share + htm_l
 R4 R1 with market-model CAR as the outcome,car_0_2 ~ uninsured_dep_share + htm_loss_to_equity + log_assets,uninsured_dep_share,-0.132755,0.0628975,-2.11066,0.0348017,331,0.0917639
 R4 R1 with market-model CAR as the outcome,car_0_2 ~ uninsured_dep_share + htm_loss_to_equity + log_assets,htm_loss_to_equity,-0.0236363,0.084558,-0.279528,0.77984,331,0.0917639
 R4 R1 with market-model CAR as the outcome,car_0_2 ~ uninsured_dep_share + htm_loss_to_equity + log_assets,log_assets,-0.0107768,0.00472418,-2.28119,0.0225371,331,0.0917639
-R5 R1 plus beta to KRE (regional-bank ETF),bhar_0_2 ~ uninsured_dep_share + htm_loss_to_equity + log_assets + kre_beta,Intercept,-0.114421,0.0872501,-1.31141,0.18972,331,0.249286
+R5 R1 plus beta to KRE (regional-bank ETF),bhar_0_2 ~ uninsured_dep_share + htm_loss_to_equity + log_assets + kre_beta,Intercept,-0.11442,0.0872501,-1.31141,0.189721,331,0.249286
 R5 R1 plus beta to KRE (regional-bank ETF),bhar_0_2 ~ uninsured_dep_share + htm_loss_to_equity + log_assets + kre_beta,uninsured_dep_share,-0.109119,0.0526159,-2.07387,0.0380911,331,0.249286
 R5 R1 plus beta to KRE (regional-bank ETF),bhar_0_2 ~ uninsured_dep_share + htm_loss_to_equity + log_assets + kre_beta,htm_loss_to_equity,-0.0368051,0.0937317,-0.392665,0.694567,331,0.249286
-R5 R1 plus beta to KRE (regional-bank ETF),bhar_0_2 ~ uninsured_dep_share + htm_loss_to_equity + log_assets + kre_beta,log_assets,0.00925613,0.0072806,1.27134,0.203607,331,0.249286
-R5 R1 plus beta to KRE (regional-bank ETF),bhar_0_2 ~ uninsured_dep_share + htm_loss_to_equity + log_assets + kre_beta,kre_beta,-0.141012,0.0356894,-3.95109,7.77959e-05,331,0.249286
+R5 R1 plus beta to KRE (regional-bank ETF),bhar_0_2 ~ uninsured_dep_share + htm_loss_to_equity + log_assets + kre_beta,log_assets,0.0092561,0.0072806,1.27134,0.203608,331,0.249286
+R5 R1 plus beta to KRE (regional-bank ETF),bhar_0_2 ~ uninsured_dep_share + htm_loss_to_equity + log_assets + kre_beta,kre_beta,-0.141012,0.0356893,-3.95109,7.77961e-05,331,0.249286
 R6 R1 including SVB (the earlier baseline),bhar_0_2 ~ uninsured_dep_share + htm_loss_to_equity + log_assets,Intercept,0.184861,0.0739984,2.49818,0.0124834,333,0.172928
 R6 R1 including SVB (the earlier baseline),bhar_0_2 ~ uninsured_dep_share + htm_loss_to_equity + log_assets,uninsured_dep_share,-0.149172,0.065674,-2.27141,0.0231223,333,0.172928
 R6 R1 including SVB (the earlier baseline),bhar_0_2 ~ uninsured_dep_share + htm_loss_to_equity + log_assets,htm_loss_to_equity,-0.0760658,0.109599,-0.694037,0.487659,333,0.172928
@@ -36,3 +36,7 @@ R9 R2 with winsorized ratios (1st/99th pct),bhar_0_2 ~ uninsured_dep_share_w + s
 R9 R2 with winsorized ratios (1st/99th pct),bhar_0_2 ~ uninsured_dep_share_w + sec_loss_to_equity_w + log_assets,uninsured_dep_share_w,-0.115374,0.0540053,-2.13634,0.0326516,332,0.131745
 R9 R2 with winsorized ratios (1st/99th pct),bhar_0_2 ~ uninsured_dep_share_w + sec_loss_to_equity_w + log_assets,sec_loss_to_equity_w,0.0106445,0.0203749,0.522435,0.601367,332,0.131745
 R9 R2 with winsorized ratios (1st/99th pct),bhar_0_2 ~ uninsured_dep_share_w + sec_loss_to_equity_w + log_assets,log_assets,-0.0148368,0.00390212,-3.80223,0.000143401,332,0.131745
+R10 R1 on bank-centric companies only,bhar_0_2 ~ uninsured_dep_share + htm_loss_to_equity + log_assets,Intercept,0.178194,0.067899,2.62439,0.00868036,324,0.141215
+R10 R1 on bank-centric companies only,bhar_0_2 ~ uninsured_dep_share + htm_loss_to_equity + log_assets,uninsured_dep_share,-0.130016,0.058172,-2.23502,0.0254157,324,0.141215
+R10 R1 on bank-centric companies only,bhar_0_2 ~ uninsured_dep_share + htm_loss_to_equity + log_assets,htm_loss_to_equity,0.0145055,0.0738124,0.196519,0.844204,324,0.141215
+R10 R1 on bank-centric companies only,bhar_0_2 ~ uninsured_dep_share + htm_loss_to_equity + log_assets,log_assets,-0.0146122,0.00419371,-3.4843,0.000493419,324,0.141215
