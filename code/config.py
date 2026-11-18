@@ -19,6 +19,8 @@ NYFED_LINK_VINTAGE_END = 20240930  # last date covered by this vintage; links en
 # specs_tried.md #13). Manual download (the FFIEC site blocks scripts with a CAPTCHA):
 # https://www.ffiec.gov/npw/FinancialReport/DataDownload -> "Relationships" (CSV). Save the ZIP in data/raw/nic/.
 NIC_DIR = RAW / "nic"
+NIC_RELATIONSHIPS = NIC_DIR / "CSV_RELATIONSHIPS.zip"   # who controls whom, with dates (A4)
+# The attributes files (CSV_ATTRIBUTES_ACTIVE.zip, CSV_ATTRIBUTES_CLOSED.zip) give each entity's primary activity (R10).
 
 # Call report quarter: the last one public BEFORE the event.
 # Q4 2022 call reports were due Jan 30, 2023, well before SVB's Mar 8, 2023 announcement.
@@ -55,6 +57,7 @@ CRSP_DELIST = CRSP_DIR / "crsp_delistings.csv"
 # Day 0 is the first trading day after that news.
 EVENT_DAY0 = "2023-03-09"
 EVENT_WINDOW = (0, 2)            # Mar 9, Mar 10 (SVB closed by regulators), Mar 13 (Signature closed Sunday)
+PRE_RESCUE_LAST_DAY = 1         # R7 (specs_tried.md #18): days 0 to +1 = Mar 9-10, before the Mar 12 rescue
 ESTIMATION_WINDOW = (-250, -30)  # trading days relative to day 0, for the market model
 MIN_EST_OBS = 150
 
@@ -68,11 +71,25 @@ MISSING_DLRET_FAILED = -1.0
 KRE_TICKER = "KRE"
 KRE_START = "2022-01-01"   # covers the estimation window (trading days -250 to -30 before Mar 9, 2023)
 KRE_END = "2023-03-31"
-KRE_PRICES = RAW / "kre_daily.csv"
+KRE_PRICES = RAW / "kre_daily.csv"   # committed to git (the one raw file that is): yfinance re-adjusts it on every download
+KRE_SHA256 = "9a1066c131e9a4fb4f585f48b8685ca5ea5afdcf67dfe19e4f7569ca5d2af046"  # the file that built the outputs
 
 # Main sample (specs_tried.md #17, instructor audit A2): SVB is the event itself, not a response to it,
 # so it is left out of the main sample. Signature stays in, with its -100% delisting return.
 EVENT_TRIGGER_TICKERS = ["SIVB"]
+
+# Bank-centric sample for R10 (specs_tried.md #20): drop entities whose banks are a small part of the company.
+MCAP_DATE = "2022-12-30"              # last trading day before the call report date's quarter ended
+BANK_CENTRIC_MIN_EQ_TO_MCAP = 0.20    # bank subsidiaries' equity / company market value
+BANKING_NAICS_PREFIXES = ("5221", "551111", "551112")  # NIC ACT_PRIM_CD codes that count as banking
+
+# Out-of-sample fragility screen (step 8; rules in specs_tried.md, written 2026-11-10, details #21-#25).
+SCREEN_PREDICTORS = ["uninsured_dep_share", "sec_loss_to_equity"]
+SCREEN_MAIN_CUTOFF = 0.10                  # flag the top 10%; 5% and 20% are secondary only
+SCREEN_CUTOFFS = [0.05, 0.10, 0.20]
+FAILURE_WINDOW = ("2023-03-14", "2023-12-31")
+POST_EVENT_CLOSES = ("2023-03-13", "2023-12-29")   # severe-return outcome: Mar 13 close to Dec 29 close
+SEVERE_LOSS = -0.50
 
 # yfinance is also used as an independent cross-check of CRSP returns in the hand checks.
 CHECK_TICKERS = ["JPM", "WAL", "ZION"]

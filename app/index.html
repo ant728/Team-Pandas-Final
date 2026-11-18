@@ -154,9 +154,35 @@
       <div class="page-heading">
         <p class="eyebrow">04 / Fragility screen</p>
         <h1 id="screen-title">Who’s Next</h1>
-        <p class="lede">Compare the balance sheets that were observable before the March 2023 shock.</p>
+        <p class="lede">Would December 2022 balance sheets alone have flagged the banks that got into trouble after SVB?</p>
       </div>
-      <div class="notice"><strong>Historical preview.</strong> These are pre-event reports. A current-quarter ranking and the test of which banks would have been flagged are still pending.</div>
+      <article class="card sensitivity-card" aria-labelledby="screen-results-title">
+        <div class="table-toolbar">
+          <div>
+            <h2 id="screen-results-title">The out-of-sample screen</h2>
+            <p class="muted">Rules written down before any bank was ranked</p>
+          </div>
+        </div>
+        <p class="regression-note">Each bank gets a percentile rank on its uninsured deposit share and on its securities losses relative to equity, both from December 31, 2022 call reports. The score is the average of the two, and the top 10% are flagged. Every outcome below comes <em>after</em> March 13, 2023, so the March crash is not used to build the score.</p>
+        <p id="screen-summary" class="regression-note" role="status">Loading the screen results…</p>
+        <div id="screen-tables" hidden>
+          <div class="table-scroll">
+            <table class="sensitivity-table">
+              <caption>The two named cases</caption>
+              <thead><tr><th scope="col">Bank</th><th scope="col">Screen rank</th><th scope="col">Top 10%?</th><th scope="col">What happened</th></tr></thead>
+              <tbody id="named-rows"></tbody>
+            </table>
+          </div>
+          <div class="table-scroll">
+            <table class="sensitivity-table">
+              <caption>How well the top-10% flag did</caption>
+              <thead><tr><th scope="col">Outcome after Mar 13, 2023</th><th scope="col">Events</th><th scope="col">Caught (recall)</th><th scope="col">Flags that had it (precision)</th><th scope="col">Random flagging</th></tr></thead>
+              <tbody id="scorecard-rows"></tbody>
+            </table>
+          </div>
+        </div>
+        <p class="regression-note">A handful of events can't prove forecasting skill: read these as descriptive. Full report: <a href="../outputs/fragility_screen.csv">per-bank screen output</a>.</p>
+      </article>
       <article id="screen-card" class="card table-card" hidden>
         <div class="table-toolbar">
           <div><h2>Compare banks</h2><p id="table-count" class="muted" role="status"></p></div>
@@ -180,6 +206,9 @@
               <th scope="col"><button data-sort="sec_loss_to_equity">Securities loss / equity <span aria-hidden="true">↕</span></button></th>
               <th scope="col"><button data-sort="htm_loss_to_equity">HTM loss / equity <span aria-hidden="true">↕</span></button></th>
               <th scope="col"><button data-sort="total_assets_bn">Assets ($B) <span aria-hidden="true">↕</span></button></th>
+              <th scope="col"><button data-sort="screen_rank">Screen rank <span aria-hidden="true">↕</span></button></th>
+              <th scope="col">Top 10%</th>
+              <th scope="col"><button data-sort="post_bhr">Return, Mar 13 – Dec 29 <span aria-hidden="true">↕</span></button></th>
               <th scope="col">Event-study status</th>
             </tr></thead>
             <tbody id="bank-rows"></tbody>

@@ -21,7 +21,8 @@ Outputs:
 import numpy as np
 import pandas as pd
 
-from config import CALL_REPORT_DATE, EVENT_TRIGGER_TICKERS, INSURANCE_LIMIT_THOUSANDS, NIC_DIR, OUTPUTS, PROCESSED, RAW
+from config import (BANK_CENTRIC_MIN_EQ_TO_MCAP, BANKING_NAICS_PREFIXES, CALL_REPORT_DATE, EVENT_TRIGGER_TICKERS,
+                    INSURANCE_LIMIT_THOUSANDS, INTERIM, NIC_DIR, NIC_RELATIONSHIPS, OUTPUTS, PROCESSED, RAW)
 
 SUM_FIELDS = ["ASSET", "DEP", "DEPDOM", "uninsured", "uninsured_reported", "EQTOT", "EQCCOMPI",
               "SC", "SCHA", "SCHF", "SCAA", "SCAF"]
@@ -42,10 +43,10 @@ def bank_level():
 
 def controlling_parents():
     """offspring RSSD -> its controlling parents' RSSDs, for relationships active on the call report date."""
-    files = sorted(NIC_DIR.glob("*.zip")) + sorted(NIC_DIR.glob("*.csv"))
-    if not files:
+    files = [NIC_RELATIONSHIPS]
+    if not NIC_RELATIONSHIPS.exists():
         raise FileNotFoundError(
-            f"No NIC relationships file in {NIC_DIR}. Download 'Relationships' (CSV) from "
+            f"No NIC relationships file at {NIC_RELATIONSHIPS}. Download 'Relationships' (CSV) from "
             "https://www.ffiec.gov/npw/FinancialReport/DataDownload (manual: the site uses a CAPTCHA) "
             "and save the ZIP there. See README provenance.")
     rel = pd.read_csv(files[0], low_memory=False)
@@ -55,6 +56,20 @@ def controlling_parents():
     print(f"NIC relationships: {len(rel)} rows, {len(active)} controlling and active on {CALL_REPORT_DATE} "
           f"({files[0].name})")
     return active.groupby("ID_RSSD_OFFSPRING")["ID_RSSD_PARENT"].apply(list).to_dict()
+
+
+def nic_primary_activity():
+    """RSSD -> primary activity code (NAICS) from the NIC attributes files (active and closed entities)."""
+    files = [NIC_DIR / "CSV_ATTRIBUTES_ACTIVE.zip", NIC_DIR / "CSV_ATTRIBUTES_CLOSED.zip"]
+    missing = [f.name for f in files if not f.exists()]
+    if missing:
+        raise FileNotFoundError(f"Missing {missing} in {NIC_DIR}: download 'Attributes- Active' and 'Attributes- Closed' "
+                                "(CSV) from https://www.ffiec.gov/npw/FinancialReport/DataDownload. See README provenance.")
+    att = pd.concat([pd.read_csv(f, dtype=str, encoding="latin-1", low_memory=False) for f in files])
+    att.columns = att.columns.str.lstrip("#").str.strip()
+    att["ID_RSSD"] = att["ID_RSSD"].astype(int)
+    assert att["ID_RSSD"].is_unique, "one attributes row per institution"
+    return att.set_index("ID_RSSD")["ACT_PRIM_CD"].str.strip()
 
 
 def listed_controller(rssd, parents, sample):
@@ -125,6 +140,8 @@ def main():
     assert uni["rssd_id"].is_unique and uni["permco"].is_unique
 
     banks = assign_entities(bank_level(), uni)
+    # Which bank belongs to which listed entity, for matching failed banks in the screen (step 8).
+    banks[["CERT", "FED_RSSD", "NAME", "rssd_id"]].to_csv(PROCESSED / "bank_entity_map.csv", index=False)
     m = measures(banks)
     rets = pd.read_csv(PROCESSED / "bank_returns.csv")
 
@@ -142,12 +159,24 @@ def main():
     assert trigger.sum() == len(EVENT_TRIGGER_TICKERS), "each event-trigger ticker should match exactly one entity"
     final["main_sample"] = final["in_sample"] & ~trigger
 
+    # Bank-centric sample for R10 (specs_tried.md #20): drop entities whose banks are a small part of the company.
+    mcap = pd.read_csv(INTERIM / "mcap_20221230.csv").set_index("permco")["mcap_thousands"]
+    final["bank_eq_to_mcap"] = final["EQTOT"] / final["permco"].map(mcap)
+    final["nic_primary_activity"] = final["rssd_id"].map(nic_primary_activity())
+    nonbank_code = final["nic_primary_activity"].notna() & ~final["nic_primary_activity"].str.startswith(BANKING_NAICS_PREFIXES, na=False)
+    small_bank = final["bank_eq_to_mcap"] < BANK_CENTRIC_MIN_EQ_TO_MCAP
+    final["bank_centric"] = final["main_sample"] & ~nonbank_code & ~small_bank
+    dropped = final[final["main_sample"] & ~final["bank_centric"]]
+    print(f"Bank-centric sample: {final['bank_centric'].sum()} of {final['main_sample'].sum()} main-sample entities. Dropped: "
+          + ", ".join(f"{t} ({'equity ' + format(r, '.1%') + ' of market value' if r < BANK_CENTRIC_MIN_EQ_TO_MCAP else 'NAICS ' + c})"
+                      for t, r, c in dropped[["ticker", "bank_eq_to_mcap", "nic_primary_activity"]].itertuples(index=False)))
+
     cols = ["rssd_id", "permco", "permno", "ticker", "name", "inst_type", "n_banks", "total_assets_bn",
             "log_assets", "uninsured_dep_share", "share_uninsured_reported", "htm_unrealized_loss_bn",
             "afs_unrealized_loss_bn", "htm_loss_to_equity", "sec_loss_to_equity", "oci_2022_to_equity",
             "htm_share_of_securities", "n_event_days", "delisted_in_window", "dlret_imputed", "beta", "kre_beta", "est_obs",
-            "bhr_0_2", "bhar_0_2", "car_0_2", "has_fdic", "has_returns", "positive_equity", "in_sample",
-            "main_sample"]
+            "bhr_0_2", "bhar_0_2", "bhr_0_1", "bhar_0_1", "car_0_2", "has_fdic", "has_returns", "positive_equity", "in_sample",
+            "main_sample", "bank_eq_to_mcap", "nic_primary_activity", "bank_centric"]
     PROCESSED.mkdir(parents=True, exist_ok=True)
     OUTPUTS.mkdir(parents=True, exist_ok=True)
     m.to_csv(PROCESSED / "bank_measures.csv", index=False)

@@ -3,6 +3,7 @@
 Outputs:
   data/raw/fdic_financials_20221231.csv    one row per bank (CERT) on the report date
   data/raw/fdic_institutions.csv           CERT -> the bank's own RSSD ID (FED_RSSD), for all banks ever
+  data/raw/fdic_failures_2023.csv          every FDIC-insured bank that failed in 2023 (for the screen, step 8)
 
 The holding company link (RSSDHCR) comes from the Q4 2022 record itself, so it is the ownership
 on the report date, not today's.
@@ -50,6 +51,14 @@ def main():
     inst.to_csv(path, index=False)
     log_download(path, f"{API}/institutions", vintage=vintage, note="CERT -> FED_RSSD, active and inactive banks")
     print(f"institutions: {len(inst)} banks (active and inactive)")
+
+    fail, vintage = fetch_all("failures", {"filters": 'FAILDATE:["2023-01-01" TO "2023-12-31"]',
+                                           "fields": "CERT,NAME,FAILDATE,CITYST,QBFASSET,RESTYPE,RESTYPE1"})
+    assert fail["CERT"].is_unique
+    path = RAW / "fdic_failures_2023.csv"
+    fail.to_csv(path, index=False)
+    log_download(path, f"{API}/failures", vintage=vintage, note="all FDIC-insured bank failures in 2023")
+    print(f"failures: {len(fail)} banks failed in 2023")
 
 
 if __name__ == "__main__":

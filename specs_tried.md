@@ -1,6 +1,6 @@
 # Specifications tried
 
-Every specification we run goes here, including the ones we drop. Count so far: **4 return/measure variants** on the 6-bank proof of concept (Oct 29), plus **2 measurement choices and 5 regression specifications** on the full sample (four introduced Nov 10, one Nov 17). Rebuilding repeats the listed specifications; no other control or sample variants have been tried.
+Every specification we run goes here, including the ones we drop. Each change to the sample, the measures or the regressions is written down and committed **before** it is run (the commit history shows the order). Count so far: **4 return/measure variants** on the 6-bank proof of concept (Oct 29); **10 regressions (R1–R10)** and the measurement choices #5–#6, #13, #15 and #17 on the full sample; Zions diagnostics #11–#12; and the pre-specified out-of-sample screen (#21–#25). No other control, sample or cutoff variants have been tried.
 
 ## Proof of concept (6 banks, yfinance returns)
 
@@ -110,3 +110,44 @@ The March 9-13 event return is not used to build the 2022 score. These are descr
 | R6 | including SVB (earlier baseline) | 333 | −0.149 (0.066) | 0.023 |
 
 Magnitude (R1): a one-SD higher uninsured share (16.0 pp) goes with a 1.8 pp lower BHAR; the average main-sample bank's BHAR was −10.0%. The loss measures stay insignificant in every spec. The main estimate is about three-quarters of the old baseline, and only just clears 5%.
+
+## Part A robustness for v1 (written 2026-11-18, before running)
+
+| # | Date | What | Sample / outcome | Decision |
+|---|---|---|---|---|
+| 18 | 2026-11-18 | **R7: window that ends before the rescue.** R1 with `bhar_0_1` as the outcome: buy-and-hold abnormal return over trading days 0 to +1 (Mar 9 and 10), computed exactly like `bhar_0_2` but stopping before the Sunday, Mar 12 deposit guarantee and BTFP (README threat 9). | Main sample (#17) | Robustness. Report whether the uninsured-share coefficient keeps its sign and significance, whichever way it goes |
+| 19 | 2026-11-18 | **R8, R9: winsorized ratios.** R1 (R8) and R2 (R9) with `uninsured_dep_share`, `htm_loss_to_equity` and `sec_loss_to_equity` winsorized at their 1st and 99th percentiles, computed on the main sample. Targets the extreme loss ratios (README threat 5: First American at 29× equity). The 1/99 cutoff is the one written in the self-audit plan on Nov 12. | Main sample (#17) | Robustness. Report both, whichever way they go; no other cutoffs will be tried |
+
+**Results of #18–#19 (run 2026-11-18, after the entries above were committed).** Main sample, HC3:
+
+| Spec | N | Uninsured share coef (SE) | p | Loss measure |
+|---|---|---|---|---|
+| R1 (main, Mar 9–13) | 332 | −0.112 (0.056) | 0.047 | HTM −0.017 (p = 0.80) |
+| **R7 (Mar 9–10 only)** | 332 | **−0.053 (0.057)** | **0.346** | HTM −0.009 (p = 0.82) |
+| R8 (R1, winsorized) | 332 | −0.113 (0.054) | 0.037 | HTM −0.052 (p = 0.34) |
+| R9 (R2, winsorized) | 332 | −0.115 (0.054) | 0.033 | securities +0.011 (p = 0.60) |
+
+- **R7:** before the rescue, the uninsured-share coefficient is less than half of R1's and not significant. The cross-sectional sorting on uninsured deposits shows up on **Monday, Mar 13**, the first trading day *after* the deposit guarantee and BTFP. The average bank's BHAR was −3.9% over Mar 9–10 and −10.2% over Mar 9–13, so most of the decline came on Monday too. We report this as it is: the main result is a Monday effect, which fits contagion to similar banks (First Republic, PacWest and Western Alliance fell hardest that day) more than a reaction to SVB's news alone.
+- **R8–R9:** winsorizing 4–8 extreme values per ratio leaves the uninsured coefficient unchanged, and the loss measures stay insignificant.
+| 20 | 2026-11-18 | **R10: bank-centric sample (README threat 8).** R1 on the main sample, dropping an entity if **(a)** its bank subsidiaries' total equity (`EQTOT`, Q4 2022) is under 20% of the company's market value on Dec 30, 2022 (CRSP price × shares), meaning the bank is a small part of what the stock prices, **or (b)** the FFIEC NIC attributes file codes its primary activity (`ACT_PRIM_CD`) as something other than banking: not 5221xx (depository credit) and not 551111/551112 (offices of bank / savings-and-loan holding companies). A missing code counts as banking. | Main sample minus 8 entities: First American, Ameriprise, Schwab, Amex, Raymond James (a); Goldman Sachs, Morgan Stanley, Ally (b; Amex also fails b) | Robustness. **Disclosure:** the 20% cutoff was set after looking at the distribution of the equity-to-market-value ratio (the five lowest are 0.5%–15%, then 23% for an ordinary bank) and the NIC codes, but before running any regression on this sample. NAICS code 551112 alone could not be used: it covers every savings-and-loan holding company, including ordinary thrifts. NIC attributes are today's values, not Dec 2022's |
+
+**Results of #20 (run 2026-11-18, after the entry above was committed).** R10 drops exactly the 8 entities named in #20. N = 324: uninsured share **−0.130 (SE 0.058, p = 0.025)**, against −0.112 (p = 0.047) in R1; HTM loss +0.015 (p = 0.84); R² 0.14. Removing the companies whose banks are a small part of the business makes the uninsured-deposit effect slightly larger, not smaller.
+
+## Fragility screen: implementation details (written 2026-11-18, before computing any rank)
+
+The screen follows the pre-specified rules above (written 2026-11-10). These are the points those rules leave open, decided before running `code/08_fragility_screen.py`:
+
+| # | Date | Detail | Decision |
+|---|---|---|---|
+| 21 | 2026-11-18 | **Bank data.** The screen uses the current `final_dataset.csv`, so it includes the NIC link fix (#13) and the bank-owned-bank rule (#15). This is the "dated crosswalk" aggregation the rules ask for. | As stated |
+| 22 | 2026-11-18 | **Percentile ranks.** `rank(pct=True)` with ties averaged, highest value = most fragile, within the ranking sample. Top-10% cutoff: the score of the ⌈0.10 × N⌉-th highest entity; every entity at or above it is flagged, so ties at the cutoff are included. Same for 5% and 20%. | As stated |
+| 23 | 2026-11-18 | **SVB and Signature** stay in the ranking sample (the rules don't exclude them). They failed before the outcome window starts, so they count as "not a failure in the window" and have a missing severe-return outcome (no Mar 13 close). Their flags are reported, and the table notes how many flagged entities had already failed by Mar 12. | As stated; the main regression sample (#17) is unrelated to the screen |
+| 24 | 2026-11-18 | **FDIC failure outcome.** Failures come from the FDIC BankFind `failures` endpoint (all 2023 failures, downloaded by step 1). A failed bank is matched to a listed entity with the same bank-to-entity assignment as step 4. Recall = flagged ÷ listed failures in the ranking sample; precision = failures ÷ flagged. Unlisted failed banks are counted and listed but can't be flagged. | As stated |
+| 25 | 2026-11-18 | **Severe-return outcome.** Compounded CRSP return from the Mar 13, 2023 close through the Dec 29, 2023 close, including the delisting return on the delisting date; after a delisting the holder has the proceeds (0% afterwards). Missing if there is no Mar 13 close, or if a delisting has no delisting return; missing cases are reported and left out of that outcome's recall and precision. A company with several share classes uses the one with the most trading days. | As stated |
+
+**Results of the screen (run 2026-11-18, after #21–#25 were committed).** Full report: `outputs/fragility_screen.md`.
+- Ranked 337 of 343 entities; the 6 excluded are the non-banks with no FDIC data. Top 10% = 34 entities (score ≥ 0.788).
+- **First Republic: rank 28, flagged** (uninsured share in the 96th percentile, securities losses in the 68th). It failed May 1, 2023, the only listed bank to fail in the window. **PacWest: rank 65, not flagged** (it's in the top 20%, a secondary cutoff only).
+- FDIC failures, top 10%: recall 1 of 1; precision 1 of 34 (2.9%), against a 0.3% base rate. The other two failures in the window (Heartland Tri-State, Citizens Bank of Sac City) weren't part of any listed company.
+- Return ≤ −50% from Mar 13 to Dec 29, top 10%: recall 2 of 4 (First Republic, Republic First); precision 2 of 32 (6.3%), against 1.2%. Six entities have no return (SVB and Signature delisted Mar 10; four had no CRSP data).
+- SVB and Signature rank 1 and 9; both had failed before the window. First American ranks 2 because of its 29× securities-loss ratio (threat 8): the score has no bank-centric filter, as the rules were written.

@@ -169,3 +169,50 @@ export function parseRegressionComparisons(text) {
   if (absent.length) throw new Error(`Missing uninsured-deposit regression rows: ${absent.join("; ")}.`);
   return comparisons.map(([spec]) => selected.get(spec));
 }
+
+/** Read a CSV into objects keyed by its header, checking that the named columns exist. */
+function readTable(text, required, what) {
+  const [header = [], ...records] = csvRecords(text);
+  const headers = header.map((value) => value.trim());
+  const missing = required.filter((name) => !headers.includes(name));
+  if (missing.length) throw new Error(`Missing ${what} columns: ${missing.join(", ")}.`);
+  return records.map((record, index) => {
+    if (record.length !== headers.length) {
+      throw new Error(`${what} record ${index + 2} has ${record.length} columns; expected ${headers.length}.`);
+    }
+    return Object.fromEntries(headers.map((name, i) => [name, record[i]]));
+  });
+}
+
+const toNumber = (value) => {
+  const text = (value ?? "").trim();
+  if (text === "") return null;
+  if (!decimal.test(text)) throw new Error(`Invalid number "${text}" in screen output.`);
+  return Number(text);
+};
+const toBool = (value) => {
+  const text = (value ?? "").trim().toLowerCase();
+  return text === "true" ? true : text === "false" ? false : null;
+};
+
+/** Step 8's per-bank screen output, keyed by RSSD ID. */
+export function parseScreenCsv(text) {
+  const rows = readTable(text, ["rssd_id", "rank", "score", "flag_top10", "fdic_failure", "failed_before_window",
+    "post_bhr", "post_missing_reason"], "Screen");
+  return new Map(rows.map((row) => [row.rssd_id.trim(), {
+    rank: toNumber(row.rank), score: toNumber(row.score), flag_top10: toBool(row.flag_top10),
+    fdic_failure: toBool(row.fdic_failure), failed_before_window: toBool(row.failed_before_window),
+    fdic_fail_date: (row.fdic_fail_date ?? "").trim() || null,
+    post_bhr: toNumber(row.post_bhr), post_missing_reason: (row.post_missing_reason ?? "").trim(),
+  }]));
+}
+
+/** Step 8's recall and precision table. */
+export function parseScorecardCsv(text) {
+  return readTable(text, ["outcome", "label", "cutoff", "events", "flagged", "hits", "recall", "precision",
+    "base_rate", "missing"], "Scorecard").map((row) => ({
+    outcome: row.outcome, label: row.label, cutoff: toNumber(row.cutoff), events: toNumber(row.events),
+    flagged: toNumber(row.flagged), hits: toNumber(row.hits), recall: toNumber(row.recall),
+    precision: toNumber(row.precision), base_rate: toNumber(row.base_rate), missing: toNumber(row.missing),
+  }));
+}

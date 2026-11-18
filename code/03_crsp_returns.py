@@ -9,6 +9,9 @@ Delistings: on a bank's delisting date, its return is (1 + ret) * (1 + dlret) - 
 delisted Mar 10 with no CRSP delisting return; we set it to MISSING_DLRET_FAILED (-100%, equity wiped out).
 A bank that delists inside the window holds cash for the remaining days.
 
+Pre-rescue outcome for R7 (specs_tried.md #18): bhar_0_1, the same BHAR over days 0 to +1 only (Mar 9-10),
+ending before the Sunday, Mar 12 deposit guarantee and BTFP.
+
 Secondary outcome: market-model CAR (sum of daily abnormal returns, beta estimated on days -250 to -30).
 
 Common-shock control for spec R5 (instructor audit A3): kre_beta, the slope of the bank's daily return on
@@ -17,13 +20,16 @@ the daily return of KRE (regional-bank ETF) over the same estimation window, wit
 Inputs:  data/raw/crsp/*.csv (licensed; from Prof. Bowen; never committed)
          data/raw/kre_daily.csv (KRE adjusted closes, from step 2)
 Outputs: data/interim/crsp_event_days.csv   row-level event-day returns (git-ignored, licensed)
+         data/interim/mcap_20221230.csv      market value per PERMCO on Dec 30, 2022, for R10 (git-ignored)
          data/processed/bank_returns.csv    one row per bank (PERMNO): computed aggregates only
 """
+import hashlib
+
 import numpy as np
 import pandas as pd
 
 from config import (CRSP_DAILY, CRSP_DELIST, CRSP_MARKET, ESTIMATION_WINDOW, EVENT_DAY0, EVENT_WINDOW,
-                    INTERIM, KRE_PRICES, MIN_EST_OBS, MISSING_DLRET_FAILED, PROCESSED)
+                    INTERIM, KRE_PRICES, KRE_SHA256, MCAP_DATE, MIN_EST_OBS, MISSING_DLRET_FAILED, PRE_RESCUE_LAST_DAY, PROCESSED)
 
 
 def load():
@@ -65,8 +71,14 @@ def main():
     est_days = cal.iloc[p0 + ESTIMATION_WINDOW[0]: p0 + ESTIMATION_WINDOW[1] + 1]
     mkt = m.set_index("date")["vwretd"]
     mkt_bhr = (1 + mkt[evt_days]).prod() - 1
+    pre_rescue_days = evt_days.iloc[: PRE_RESCUE_LAST_DAY - EVENT_WINDOW[0] + 1]
+    mkt_bhr_0_1 = (1 + mkt[pre_rescue_days]).prod() - 1
 
-    # KRE daily returns. Every estimation day must have one, so no bank's kre_beta rests on a gap.
+    # KRE daily returns, from the committed file that built the outputs (a re-download would differ slightly).
+    sha = hashlib.sha256(KRE_PRICES.read_bytes()).hexdigest()
+    assert sha == KRE_SHA256, (f"{KRE_PRICES.name} isn't the committed version (sha256 {sha[:12]}...). Restore it with "
+                               "`git checkout data/raw/kre_daily.csv`, or update KRE_SHA256 in config.py on purpose.")
+    # Every estimation day must have a KRE return, so no bank's kre_beta rests on a gap.
     kre = pd.read_csv(KRE_PRICES, parse_dates=["date"]).set_index("date")["close"].sort_index().pct_change()
     missing_kre = est_days[~est_days.isin(kre.dropna().index)]
     assert missing_kre.empty, f"KRE returns missing on estimation days: {list(missing_kre.dt.date)}"
@@ -88,6 +100,9 @@ def main():
                "dlret_imputed": bool(g["dlret_imputed"].any())}
         rec["bhr_0_2"] = (1 + g["r"]).prod() - 1      # days after a delisting earn 0 (cash)
         rec["bhar_0_2"] = rec["bhr_0_2"] - mkt_bhr
+        pre = g[g["rel_day"] <= PRE_RESCUE_LAST_DAY]
+        rec["bhr_0_1"] = (1 + pre["r"]).prod() - 1
+        rec["bhar_0_1"] = rec["bhr_0_1"] - mkt_bhr_0_1
 
         est = d[(d["permno"] == permno) & d["date"].isin(est_days)][["date", "ret"]].dropna()
         est = est.assign(mkt=est["date"].map(mkt), kre=est["date"].map(kre))
@@ -108,6 +123,12 @@ def main():
     evt[["permno", "permco", "ticker", "date", "rel_day", "ret", "dlret", "dlret_imputed", "r", "mkt_ret", "ar"]] \
         .to_csv(INTERIM / "crsp_event_days.csv", index=False)
     out.to_csv(PROCESSED / "bank_returns.csv", index=False)
+
+    # Market value on Dec 30, 2022 (price x shares, summed over a company's share classes), for the
+    # bank-centric sample in R10. CRSP-derived, so it stays in data/interim/ (git-ignored).
+    day = d[d["date"] == pd.Timestamp(MCAP_DATE)]
+    mcap = (day["prc"].abs() * day["shrout"]).groupby(day["permco"]).sum(min_count=1).rename("mcap_thousands")
+    mcap.to_csv(INTERIM / "mcap_20221230.csv")
 
     print(f"market BHR over {evt_days.iloc[0]:%b %d}-{evt_days.iloc[-1]:%b %d}: {mkt_bhr:.2%}")
     print(f"{len(out)} banks with event-window returns; "

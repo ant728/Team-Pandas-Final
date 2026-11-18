@@ -10,7 +10,7 @@ import numpy as np
 import pandas as pd
 
 from config import (CALL_REPORT_DATE, CRSP_DAILY, CRSP_MARKET, ESTIMATION_WINDOW, EVENT_DAY0, INSURANCE_LIMIT_THOUSANDS,
-                    KRE_PRICES, NIC_DIR, OUTPUTS, RAW)
+                    KRE_PRICES, NIC_RELATIONSHIPS, OUTPUTS, RAW)
 from ffiec_comparison import FFIEC_ZIP, comparison_table, write_report as write_ffiec_report
 
 final = pd.read_csv(OUTPUTS / "final_dataset.csv").set_index("ticker")
@@ -49,7 +49,7 @@ check("JPM total assets ($B), summed by hand", final.at["JPM", "total_assets_bn"
 # --- NIC link (instructor audit A4): TFS Financial, a listed company under a mutual holding company --
 # The old rule (top-tier holder) missed it. Rebuild its assets from the raw NIC and FDIC files with plain loops.
 tfsl = int(final.at["TFSL", "rssd_id"])
-with zipfile.ZipFile(next(NIC_DIR.glob("*.zip"))) as z, z.open(z.namelist()[0]) as f:
+with zipfile.ZipFile(NIC_RELATIONSHIPS) as z, z.open(z.namelist()[0]) as f:
     kids = {int(r["ID_RSSD_OFFSPRING"]) for r in csv.DictReader(io.TextIOWrapper(f, encoding="utf-8-sig"))
             if int(r["#ID_RSSD_PARENT"]) == tfsl and r["CTRL_IND"] == "1"
             and int(r["DT_START"]) <= d <= int(r["DT_END"])}
@@ -59,6 +59,16 @@ with open(RAW / f"fdic_financials_{CALL_REPORT_DATE}.csv", newline="") as f:
     tfsl_assets = sum(float(r["ASSET"]) for r in csv.DictReader(f) if r["CERT"] in certs) / 1e6
 check("TFS Financial total assets ($B), via NIC ownership rows", final.at["TFSL", "total_assets_bn"], tfsl_assets, 1e-3,
       "raw NIC relationships (banks TFS Financial controls on 2022-12-31) and raw FDIC rows")
+
+# --- Bank-centric rule (R10): Schwab's bank equity / market value, from raw FDIC and CRSP rows --
+schw = final.at["SCHW", "rssd_id"]
+with open(RAW / f"fdic_financials_{CALL_REPORT_DATE}.csv", newline="") as f:
+    schw_eq = sum(float(r["EQTOT"]) for r in csv.DictReader(f) if r["RSSDHCR"] and int(float(r["RSSDHCR"])) == schw)
+with open(CRSP_DAILY, newline="") as f:
+    schw_mcap = sum(abs(float(r["prc"])) * float(r["shrout"]) for r in csv.DictReader(f)
+                    if r["ticker"] == "SCHW" and r["date"] == "2022-12-30")
+check("Schwab bank equity / market value (bank-centric rule, R10)", final.at["SCHW", "bank_eq_to_mcap"],
+      schw_eq / schw_mcap, 1e-6, "raw FDIC rows with RSSDHCR = Schwab, and CRSP price x shares on 2022-12-30")
 
 # --- Uninsured-deposit approximation vs. the reported estimate -------------------------------
 fin = pd.read_csv(RAW / f"fdic_financials_{CALL_REPORT_DATE}.csv")
@@ -82,18 +92,19 @@ for t in ["JPM", "WAL", "ZION"]:
     check(name, final.at[t, "bhr_0_2"], yf_bhr, 0.005, "yfinance adjusted closes (independent source)")
 
 # --- WAL's BHAR recomputed from the raw CRSP rows with a plain loop --------------------------
-days = ["2023-03-09", "2023-03-10", "2023-03-13"]
-wal, mkt = 1.0, 1.0
-with open(CRSP_DAILY, newline="") as f:
-    for r in csv.DictReader(f):
-        if r["ticker"] == "WAL" and r["date"] in days:
-            wal *= 1 + float(r["ret"])
-with open(CRSP_MARKET, newline="") as f:
-    for r in csv.DictReader(f):
-        if r["date"] in days:
-            mkt *= 1 + float(r["vwretd"])
-check("WAL BHAR[0,+2], recomputed from raw CRSP rows", final.at["WAL", "bhar_0_2"], (wal - 1) - (mkt - 1), 1e-4,
-      "crsp_daily_2022_2023.csv and crsp_market_vwretd.csv")
+for col, days in [("bhar_0_2", ["2023-03-09", "2023-03-10", "2023-03-13"]),
+                  ("bhar_0_1", ["2023-03-09", "2023-03-10"])]:  # R7's pre-rescue window (specs_tried.md #18)
+    wal, mkt = 1.0, 1.0
+    with open(CRSP_DAILY, newline="") as f:
+        for r in csv.DictReader(f):
+            if r["ticker"] == "WAL" and r["date"] in days:
+                wal *= 1 + float(r["ret"])
+    with open(CRSP_MARKET, newline="") as f:
+        for r in csv.DictReader(f):
+            if r["date"] in days:
+                mkt *= 1 + float(r["vwretd"])
+    check(f"WAL {col}, recomputed from raw CRSP rows", final.at["WAL", col], (wal - 1) - (mkt - 1), 1e-4,
+          "crsp_daily_2022_2023.csv and crsp_market_vwretd.csv")
 
 # --- WAL's KRE beta (spec R5) recomputed as cov/var with a plain loop --------------------------
 kre_px = {}
@@ -137,6 +148,30 @@ check("R1 uninsured-share coefficient, recomputed with numpy", r1["coef"], b[1],
       "numpy least squares on outputs/final_dataset.csv (in-sample rows)")
 check("R1 uninsured-share HC3 standard error, recomputed by hand", r1["se"], se_hc3[1], 1e-5,
       "HC3 sandwich formula in numpy: (X'X)^-1 X' diag(e^2/(1-h)^2) X (X'X)^-1")
+
+# --- Step 8, the fragility screen: First Republic's score and post-event return, by hand ------------
+screen = pd.read_csv(OUTPUTS / "fragility_screen.csv").set_index("ticker")
+with open(OUTPUTS / "final_dataset.csv", newline="") as f:
+    rows = [(float(r["uninsured_dep_share"]), float(r["sec_loss_to_equity"]), r["ticker"])
+            for r in csv.DictReader(f) if r["uninsured_dep_share"] and r["sec_loss_to_equity"]]
+frc_vals = [(u, s) for u, s, t in rows if t == "FRC"][0]
+pcts = []
+for j, x in enumerate(frc_vals):
+    below = sum(1 for r in rows if r[j] < x)
+    ties = sum(1 for r in rows if r[j] == x)
+    pcts.append((below + (ties + 1) / 2) / len(rows))     # average rank of the tie group, as a share of N
+check("First Republic screen score, from percentile ranks counted by hand", screen.at["FRC", "score"],
+      sum(pcts) / 2, 1e-6, "plain counts over outputs/final_dataset.csv (entities with both predictors)")
+
+growth = 1.0
+with open(CRSP_DAILY, newline="") as f:
+    for r in csv.DictReader(f):
+        if r["ticker"] == "FRC" and "2023-03-13" < r["date"] <= "2023-12-29":
+            ret = float(r["ret"]) if r["ret"] else 0.0
+            dl = float(r["dlret"]) if r["dlstdt"] == r["date"] and r["dlret"] else 0.0
+            growth *= (1 + ret) * (1 + dl)
+check("First Republic return, Mar 13 close to Dec 29 close (with delisting return)", screen.at["FRC", "post_bhr"],
+      growth - 1, 1e-6, "raw CRSP rows for FRC, including its delisting return")
 
 # --- FDIC API values vs. the FFIEC CDR Q4 2022 bulk file -------------------------------------
 if FFIEC_ZIP.exists():

@@ -1,8 +1,11 @@
 """Step 2: prices from yfinance, for two separate jobs.
 
-1. KRE, the regional-bank ETF (REQUIRED). Step 3 estimates each bank's beta to KRE, the control for the
-   common shock in spec R5 (instructor audit A3, specs_tried.md #14). Our CRSP pull doesn't include KRE.
-   Output: data/raw/kre_daily.csv, one row per date. If it can't be downloaded after a few tries, the run stops.
+1. KRE, the regional-bank ETF. Step 3 estimates each bank's beta to KRE, the control for the common shock in
+   spec R5 (instructor audit A3, specs_tried.md #14). Our CRSP pull doesn't include KRE.
+   data/raw/kre_daily.csv is COMMITTED to the repo: yfinance's adjusted closes shift slightly on every download,
+   which made kre_beta change between runs (audits/04_self_audit.md, finding C). So this step uses the committed
+   file and only downloads KRE if the file is missing, or if you run `python 02_download_prices.py --refresh-kre`
+   (which changes the outputs; step 3 then stops until KRE_SHA256 in config.py is updated on purpose).
 
 2. A few banks' prices, ONLY to cross-check CRSP returns in the hand checks. CRSP is the source for every
    bank return we report; if yfinance agrees on the event-window return for a few surviving banks, that's
@@ -10,6 +13,7 @@
    yfinance is unofficial and sometimes fails or rate-limits. Because these are only cross-checks, a failure
    does not stop run_all.py: the symbol is skipped with a warning, and 06_hand_checks.py marks it SKIPPED.
 """
+import sys
 import time
 
 import pandas as pd
@@ -44,7 +48,10 @@ def download_kre(tries=3):
 
 
 def main():
-    download_kre()
+    if KRE_PRICES.exists() and "--refresh-kre" not in sys.argv:
+        print(f"{KRE_TICKER}: using the committed {KRE_PRICES.name} (not re-downloaded; see this file's docstring)")
+    else:
+        download_kre()
 
     frames = []
     for sym in CHECK_TICKERS:

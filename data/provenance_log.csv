@@ -24,3 +24,19 @@ data/raw/fdic_institutions.csv,https://api.fdic.gov/banks/institutions,2026-11-1
 data/raw/kre_daily.csv,yfinance Ticker('KRE').history(auto_adjust=True),2026-11-17T19:00:27Z,yfinance 1.7.0,regional-bank index for kre_beta; 2022-01-01 to 2023-03-31
 data/raw/prices_check.csv,yfinance Ticker.history(auto_adjust=True),2026-11-17T19:00:28Z,yfinance 1.7.0,cross-check only; 2023-03-01 to 2023-03-20
 data/raw/nic/CSV_RELATIONSHIPS.zip,https://www.ffiec.gov/npw/FinancialReport/DataDownload,2026-11-17T18:57:00Z,FFIEC NIC Relationships CSV (site updated 11/17/2026),"Manual download (CAPTCHA): CSV Download -> Relationships; 289,612 rows; sha256 prefix 3506ee44a961ac0c"
+data/raw/nic/CSV_ATTRIBUTES_ACTIVE.zip,https://www.ffiec.gov/npw/FinancialReport/DataDownload,2026-11-18T16:18:00Z,FFIEC NIC Attributes-Active CSV (site updated 11/18/2026),"Manual download (CAPTCHA): CSV Download -> Attributes- Active; sha256 prefix 5c4b86978d12fbfe"
+data/raw/nic/CSV_ATTRIBUTES_CLOSED.zip,https://www.ffiec.gov/npw/FinancialReport/DataDownload,2026-11-18T16:19:00Z,FFIEC NIC Attributes-Closed CSV (site updated 11/18/2026),"Manual download (CAPTCHA): CSV Download -> Attributes- Closed; sha256 prefix 90aa167bfd1faa41"
+data/raw/nyfed_crsp_frb_link.csv,https://www.newyorkfed.org/medialibrary/media/research/banking_research/data/crsp_20240930v2.csv,2026-11-18T16:23:56Z,crsp_20240930v2,RSSD -> PERMCO link with date ranges
+data/raw/fdic_financials_20221231.csv,https://api.fdic.gov/banks/financials,2026-11-18T16:24:00Z,risview_20261116221646,"all banks, REPDTE=20221231"
+data/raw/fdic_institutions.csv,https://api.fdic.gov/banks/institutions,2026-11-18T16:24:04Z,institutions_20261113100007,"CERT -> FED_RSSD, active and inactive banks"
+data/raw/kre_daily.csv,yfinance Ticker('KRE').history(auto_adjust=True),2026-11-18T16:24:08Z,yfinance 1.7.0,regional-bank index for kre_beta; 2022-01-01 to 2023-03-31
+data/raw/prices_check.csv,yfinance Ticker.history(auto_adjust=True),2026-11-18T16:24:09Z,yfinance 1.7.0,cross-check only; 2023-03-01 to 2023-03-20
+data/raw/fdic_financials_20221231.csv,https://api.fdic.gov/banks/financials,2026-11-18T16:27:53Z,risview_20261116221646,"all banks, REPDTE=20221231"
+data/raw/fdic_institutions.csv,https://api.fdic.gov/banks/institutions,2026-11-18T16:27:57Z,institutions_20261113100007,"CERT -> FED_RSSD, active and inactive banks"
+data/raw/fdic_failures_2023.csv,https://api.fdic.gov/banks/failures,2026-11-18T16:27:57Z,failures_1787667198788,all FDIC-insured bank failures in 2023
+data/raw/nyfed_crsp_frb_link.csv,https://www.newyorkfed.org/medialibrary/media/research/banking_research/data/crsp_20240930v2.csv,2026-11-18T16:31:31Z,crsp_20240930v2,RSSD -> PERMCO link with date ranges
+data/raw/fdic_financials_20221231.csv,https://api.fdic.gov/banks/financials,2026-11-18T16:31:35Z,risview_20261116221646,"all banks, REPDTE=20221231"
+data/raw/fdic_institutions.csv,https://api.fdic.gov/banks/institutions,2026-11-18T16:31:39Z,institutions_20261113100007,"CERT -> FED_RSSD, active and inactive banks"
+data/raw/fdic_failures_2023.csv,https://api.fdic.gov/banks/failures,2026-11-18T16:31:40Z,failures_1787667198788,all FDIC-insured bank failures in 2023
+data/raw/kre_daily.csv,yfinance Ticker('KRE').history(auto_adjust=True),2026-11-18T16:31:42Z,yfinance 1.7.0,regional-bank index for kre_beta; 2022-01-01 to 2023-03-31
+data/raw/prices_check.csv,yfinance Ticker.history(auto_adjust=True),2026-11-18T16:31:42Z,yfinance 1.7.0,cross-check only; 2023-03-01 to 2023-03-20
