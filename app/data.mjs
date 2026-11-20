@@ -6,7 +6,7 @@ const numericColumns = [
   "htm_loss_to_equity",
   "bhar_0_2",
 ];
-const booleanColumns = ["in_sample", "dlret_imputed", "has_fdic", "has_returns", "positive_equity"];
+const booleanColumns = ["in_sample", "main_sample", "dlret_imputed", "has_fdic", "has_returns", "positive_equity"];
 const optionalNumericColumns = ["bhr_0_2", "car_0_2", "n_event_days"];
 const optionalBooleanColumns = ["delisted_in_window"];
 // The pipeline has no delisting flags for rows without CRSP return observations.
@@ -168,6 +168,59 @@ export function parseRegressionComparisons(text) {
   const absent = comparisons.filter(([spec]) => !selected.has(spec)).map(([spec]) => spec);
   if (absent.length) throw new Error(`Missing uninsured-deposit regression rows: ${absent.join("; ")}.`);
   return comparisons.map(([spec]) => selected.get(spec));
+}
+
+/** Read R1–R10 uninsured-deposit coefficients and approximate 95% intervals from regression outputs. */
+export function parseCoefficientComparisons(text) {
+  const targets = new Map(Array.from({ length: 10 }, (_, index) => {
+    const id = `R${index + 1}`;
+    return [id, id === "R8" || id === "R9" ? "uninsured_dep_share_w" : "uninsured_dep_share"];
+  }));
+  const [header = [], ...records] = csvRecords(text);
+  const headers = header.map((value) => value.trim());
+  const column = new Map(headers.map((name, index) => [name, index]));
+  const required = ["spec", "formula", "variable", "coef", "se", "t", "p", "n", "r2"];
+  const missing = required.filter((name) => !column.has(name));
+  if (missing.length) throw new Error(`Missing regression CSV columns: ${missing.join(", ")}.`);
+  if (column.size !== headers.length) throw new Error("The regression CSV has duplicate column names.");
+
+  const selected = new Map();
+  records.forEach((record, index) => {
+    const label = `Regression CSV record ${index + 2}`;
+    if (record.length !== headers.length) {
+      throw new Error(`${label} has ${record.length} columns; expected ${headers.length}.`);
+    }
+    const read = (name) => record[column.get(name)].trim();
+    const spec = read("spec");
+    const id = spec.match(/^(R(?:10|[1-9]))\s+\S/)?.[1];
+    const variable = read("variable");
+    if (!targets.has(id) || variable !== targets.get(id)) return;
+    if (selected.has(id)) throw new Error(`${label} repeats the uninsured-deposit coefficient for ${id}.`);
+
+    const row = { id, spec, variable };
+    for (const name of ["n", "coef", "se"]) {
+      const value = read(name);
+      const number = Number(value);
+      if (!decimal.test(value) || !Number.isFinite(number)) {
+        throw new Error(`${label} has an invalid number in ${name}.`);
+      }
+      if (name === "se" && number < 0) throw new Error(`${label} has a negative standard error.`);
+      if (name === "n" && (!Number.isSafeInteger(number) || number <= 0)) {
+        throw new Error(`${label} needs a positive integer sample size.`);
+      }
+      row[name] = number;
+    }
+    row.low = row.coef - 1.96 * row.se;
+    row.high = row.coef + 1.96 * row.se;
+    if (!Number.isFinite(row.low) || !Number.isFinite(row.high)) {
+      throw new Error(`${label} has an interval outside the finite numeric range.`);
+    }
+    selected.set(id, row);
+  });
+
+  const absent = [...targets.keys()].filter((id) => !selected.has(id));
+  if (absent.length) throw new Error(`Missing uninsured-deposit regression rows: ${absent.join(", ")}.`);
+  return [...targets.keys()].map((id) => selected.get(id));
 }
 
 /** Read a CSV into objects keyed by its header, checking that the named columns exist. */

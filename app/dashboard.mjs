@@ -1,4 +1,4 @@
-import { parseDashboardCsv, parseRegressionComparisons, parseScorecardCsv, parseScreenCsv } from "./data.mjs";
+import { parseDashboardCsv, parseRegressionComparisons, parseCoefficientComparisons, parseScorecardCsv, parseScreenCsv } from "./data.mjs";
 
 const byId = (id) => document.getElementById(id);
 const pages = ["intro", "method", "results", "screen"];
@@ -14,6 +14,7 @@ let selectedId;
 let sortKey = "uninsured_dep_share";
 let screen = new Map();
 let sortOrder = -1;
+let coefficientRows = [];
 
 const percent = (value) => value == null ? "—" : pct.format(value);
 const assets = (value) => value == null ? "—" : number.format(value);
@@ -49,7 +50,7 @@ function showPage(moveFocus = false) {
     heading.focus({ preventScroll: true });
     window.scrollTo(0, 0);
   }
-  if (page === "results") requestAnimationFrame(drawChart);
+  if (page === "results") requestAnimationFrame(() => { drawChart(); drawCoefficientChart(); });
 }
 
 function updateSelection() {
@@ -217,14 +218,19 @@ function renderTable() {
     bankCell.append(element("span", bankLabel(row), "bank-ticker"));
     if (row.ticker) bankCell.append(element("span", row.name, "bank-name"));
     const tr = element("tr");
+    const labels = ["Uninsured share", "Securities loss / equity", "HTM loss / equity", "Assets ($B)", "Screen rank", "Top-decile flag", "Return, Mar 13 – Dec 29", "Event-study status"];
     tr.append(bankCell, ...[
       percent(row.uninsured_dep_share), percent(row.sec_loss_to_equity),
       percent(row.htm_loss_to_equity), assets(row.total_assets_bn),
       row.screen_rank == null ? "—" : "#" + row.screen_rank,
-      row.flag_top10 == null ? "—" : row.flag_top10 ? "Flagged" : "",
+      row.flag_top10 == null ? "—" : row.flag_top10 ? "Flagged" : "Not flagged",
       row.post_bhr == null ? (row.post_missing_reason || "—") : pct.format(row.post_bhr),
       sampleStatus(row),
-    ].map((value) => element("td", value)));
+    ].map((value, index) => {
+      const cell = element("td", value);
+      cell.dataset.label = labels[index];
+      return cell;
+    }));
     return tr;
   });
   if (!tableRows.length) {
@@ -241,6 +247,8 @@ function renderTable() {
     else button.parentElement.removeAttribute("aria-sort");
     button.lastElementChild.textContent = active ? (sortOrder === 1 ? "↑" : "↓") : "↕";
   }
+  byId("mobile-sort-key").value = sortKey;
+  byId("mobile-sort-direction").textContent = sortOrder === 1 ? "Ascending" : "Descending";
 }
 
 function populateDashboard() {
@@ -251,7 +259,11 @@ function populateDashboard() {
   const imputed = plotted.filter((row) => row.dlret_imputed);
   byId("intro-count").textContent = entities.length;
   byId("intro-coverage").textContent = included.length;
-  byId("intro-source").textContent = "CRSP event study · December 2022 Call Reports";
+  byId("intro-main").textContent = entities.filter((row) => row.main_sample).length;
+  byId("intro-source").textContent = "SVB is left out of the main regressions as the event trigger.";
+  const matched = entities.filter((row) => row.has_fdic).length;
+  byId("method-link-coverage").textContent = matched + " of " + entities.length
+    + " companies matched; the " + (entities.length - matched) + " unmatched entities are non-banks.";
   byId("results-status").textContent = plotted.length + " of " + entities.length + " entities plotted. "
     + (entities.length - included.length) + " outside the analysis sample."
     + (omitted ? " " + omitted + " in-sample entities lack a chart value." : "");
@@ -313,8 +325,15 @@ async function loadScreen() {
       th.scope = "row";
       const outcome = !s ? "—" : s.fdic_failure ? "Failed " + s.fdic_fail_date + "; stock " + pct.format(s.post_bhr)
         : s.post_bhr == null ? s.post_missing_reason : "Stock " + pct.format(s.post_bhr) + " by Dec 29";
-      tr.append(th, element("td", s ? "#" + s.rank + " of " + screen.size : "not ranked"),
-        element("td", s ? (s.flag_top10 ? "Yes" : "No") : "—"), element("td", outcome));
+      tr.append(th, ...[
+        ["Screen rank", s ? "#" + s.rank + " of " + screen.size : "not ranked"],
+        ["Top-decile flag", s ? (s.flag_top10 ? "Yes" : "No") : "—"],
+        ["What happened", outcome],
+      ].map(([label, value]) => {
+        const cell = element("td", value);
+        cell.dataset.label = label;
+        return cell;
+      }));
       return tr;
     });
     byId("named-rows").replaceChildren(...named);
@@ -324,9 +343,16 @@ async function loadScreen() {
       const tr = element("tr");
       const th = element("th", c.label + (c.missing ? " (" + c.missing + " banks with no return left out)" : ""));
       th.scope = "row";
-      tr.append(th, element("td", c.events), element("td", c.hits + " of " + c.events + " (" + share.format(c.recall) + ")"),
-        element("td", c.hits + " of " + c.flagged + " (" + share.format(c.precision) + ")"),
-        element("td", share.format(c.base_rate)));
+      tr.append(th, ...[
+        ["Events", c.events],
+        ["Caught (recall)", c.hits + " of " + c.events + " (" + share.format(c.recall) + ")"],
+        ["Flags that had it (precision)", c.hits + " of " + c.flagged + " (" + share.format(c.precision) + ")"],
+        ["Overall event rate", share.format(c.base_rate)],
+      ].map(([label, value]) => {
+        const cell = element("td", value);
+        cell.dataset.label = label;
+        return cell;
+      }));
       return tr;
     }));
     byId("screen-tables").hidden = false;
@@ -341,7 +367,8 @@ async function loadRegressionComparisons() {
     const url = new URL("../outputs/regressions_v0.csv", import.meta.url);
     const response = await fetch(url, { cache: "no-store" });
     if (!response.ok) throw new Error("Regression output returned HTTP " + response.status + ".");
-    const comparisons = parseRegressionComparisons(await response.text());
+    const text = await response.text();
+    const comparisons = parseRegressionComparisons(text);
     const rows = comparisons.map((comparison) => {
       const tr = element("tr");
       const sample = element("th", comparison.sample);
@@ -357,9 +384,80 @@ async function loadRegressionComparisons() {
     byId("regression-rows").replaceChildren(...rows);
     byId("regression-status").hidden = true;
     byId("regression-table").hidden = false;
+    loadCoefficientChart(text);
   } catch (error) {
     byId("regression-status").textContent = "Regression comparison unavailable: " + error.message;
+    byId("coefficient-status").textContent = "Coefficient estimates unavailable: " + error.message;
   }
+}
+
+function loadCoefficientChart(text) {
+  try {
+    coefficientRows = parseCoefficientComparisons(text);
+    byId("coefficient-rows").replaceChildren(...coefficientRows.map((row) => {
+      const tr = element("tr");
+      const label = element("th", row.spec);
+      label.scope = "row";
+      tr.append(label, ...[
+        ["N", row.n],
+        ["Coefficient", coefficient.format(row.coef)],
+        ["Approximate interval", coefficient.format(row.low) + " to " + coefficient.format(row.high)],
+      ].map(([name, value]) => {
+        const cell = element("td", value);
+        cell.dataset.label = name;
+        return cell;
+      }));
+      return tr;
+    }));
+    const preRescue = coefficientRows.find((row) => row.id === "R7");
+    byId("pre-rescue-note").textContent = preRescue.id + " · " + preRescue.spec.replace(/^R7 R1 over /, "")
+      + ": this interval " + (preRescue.low <= 0 && preRescue.high >= 0 ? "includes" : "does not include")
+      + " zero. This compares event windows; it does not establish what caused the difference.";
+    byId("coefficient-status").hidden = true;
+    byId("coefficient-details").hidden = false;
+    drawCoefficientChart();
+  } catch (error) {
+    byId("coefficient-status").textContent = "Coefficient estimates unavailable: " + error.message;
+  }
+}
+
+function drawCoefficientChart() {
+  const plot = byId("coefficient-plot");
+  if (!coefficientRows.length || !plot.clientWidth) return;
+  const width = plot.clientWidth;
+  const left = 85, right = width - 18, top = 26, rowHeight = 34;
+  const height = top + coefficientRows.length * rowHeight + 40;
+  const low = Math.min(0, ...coefficientRows.map((row) => row.low));
+  const high = Math.max(0, ...coefficientRows.map((row) => row.high));
+  const padding = (high - low) * 0.08 || 0.05;
+  const x = (value) => left + (value - low + padding) / (high - low + 2 * padding) * (right - left);
+  const svg = svgElement("svg", {
+    viewBox: "0 0 " + width + " " + height, role: "img",
+    "aria-label": "Uninsured-deposit coefficients with approximate 95 percent intervals; values and descriptions are in the table below",
+  });
+  const ticks = [low, 0, high];
+  for (const value of ticks) {
+    svg.append(
+      svgElement("line", {x1:x(value), x2:x(value), y1:top - 10, y2:height - 38, stroke:value === 0 ? "#657e72" : "#e0e9e0", "stroke-dasharray":value === 0 ? "4 3" : "none"}),
+      svgElement("text", {x:x(value), y:value === 0 ? top - 15 : height - 15, "text-anchor":"middle"}, coefficient.format(value)),
+    );
+  }
+  coefficientRows.forEach((row, index) => {
+    const y = top + index * rowHeight + rowHeight / 2;
+    const color = row.id === "R7" ? "#9b541a" : "#28684d";
+    const group = svgElement("g", {"data-spec":row.id});
+    group.append(
+      svgElement("title", {}, row.spec + ": coefficient " + coefficient.format(row.coef) + ", interval "
+        + coefficient.format(row.low) + " to " + coefficient.format(row.high) + ", N " + row.n),
+      svgElement("text", {x:left - 10, y:y + 4, "text-anchor":"end", class:row.id === "R1" ? "main-spec" : ""}, row.id + (row.id === "R1" ? " · Main" : "")),
+      svgElement("line", {x1:x(row.low), x2:x(row.high), y1:y, y2:y, stroke:color, "stroke-width":2}),
+      svgElement("line", {x1:x(row.low), x2:x(row.low), y1:y - 4, y2:y + 4, stroke:color}),
+      svgElement("line", {x1:x(row.high), x2:x(row.high), y1:y - 4, y2:y + 4, stroke:color}),
+      svgElement("circle", {cx:x(row.coef), cy:y, r:row.id === "R1" ? 5 : 4, fill:color}),
+    );
+    svg.append(group);
+  });
+  plot.replaceChildren(svg);
 }
 
 window.addEventListener("hashchange", () => showPage(true));
@@ -370,6 +468,12 @@ document.querySelector(".skip-link").addEventListener("click", (event) => {
 byId("bank-filter").addEventListener("input", renderTable);
 byId("sample-filter").addEventListener("change", renderTable);
 byId("bank-select").addEventListener("change", (event) => setBank(event.target.value));
+byId("mobile-sort-key").addEventListener("change", (event) => {
+  sortKey = event.target.value;
+  sortOrder = ["bank", "screen_rank"].includes(sortKey) ? 1 : -1;
+  renderTable();
+});
+byId("mobile-sort-direction").addEventListener("click", () => { sortOrder *= -1; renderTable(); });
 for (const button of document.querySelectorAll("[data-sort]")) {
   button.addEventListener("click", () => {
     sortOrder = sortKey === button.dataset.sort ? -sortOrder : ["bank", "screen_rank"].includes(button.dataset.sort) ? 1 : -1;
@@ -378,6 +482,7 @@ for (const button of document.querySelectorAll("[data-sort]")) {
   });
 }
 new ResizeObserver(() => requestAnimationFrame(drawChart)).observe(byId("plot"));
+new ResizeObserver(() => requestAnimationFrame(drawCoefficientChart)).observe(byId("coefficient-plot"));
 showPage();
 start();
 loadRegressionComparisons();

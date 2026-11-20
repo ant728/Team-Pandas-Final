@@ -54,6 +54,7 @@ main:focus { outline: none; }
 .snapshot { background: #e8f1de; border: 1px solid #d0e0c9; border-radius: var(--radius); padding: clamp(21px, 3vw, 32px); }
 .snapshot-date { font-size: clamp(1.6rem, 3.4vw, 2.5rem); line-height: 1.1; letter-spacing: -.05em; font-weight: 700; margin: 10px 0 22px; }
 .snapshot-grid { display: grid; grid-template-columns: 1fr 1fr; border-top: 1px solid #cbdac4; padding-top: 15px; gap: 12px; }
+.snapshot-grid > div:last-child { grid-column: 1 / -1; }
 .snapshot-grid dt { color: var(--muted); font-size: .8rem; }
 .snapshot-grid dd { font-size: 2rem; font-weight: 710; line-height: 1.22; font-variant-numeric: tabular-nums; }
 .snapshot-foot { margin-top: 15px; color: var(--muted); font-size: .83rem; }
@@ -107,6 +108,8 @@ select, input { min-width: 0; max-width: 100%; background: var(--white); border:
 .table-card { margin-top: 16px; overflow: hidden; }
 .table-toolbar { padding: 18px 19px; }
 .table-filters { display: flex; flex-wrap: wrap; gap: 9px; }
+.mobile-sort { display: none; }
+.mobile-sort button { align-self: end; border: 1px solid #a9b9af; border-radius: 8px; padding: 8px 10px; background: var(--paper); color: var(--ink); font-size: .89rem; }
 .sensitivity-card { margin-top: 16px; padding-bottom: 14px; }
 .sensitivity-table { min-width: 0; font-size: .86rem; }
 .sensitivity-table caption { padding: 0 19px 11px; text-align: left; color: var(--muted); font-size: .82rem; }
@@ -114,6 +117,15 @@ select, input { min-width: 0; max-width: 100%; background: var(--white); border:
 .sensitivity-table tbody th { font-weight: 600; }
 .sensitivity-table td { white-space: nowrap; }
 .regression-note { padding: 8px 19px 0; color: var(--muted); font-size: .83rem; }
+.coefficient-card { margin-top: 16px; padding-bottom: 18px; }
+.coefficient-card .chart-heading { padding: 19px 19px 0; }
+.coefficient-plot { margin: 12px 19px 0; min-width: 0; }
+.coefficient-plot svg { display: block; width: 100%; }
+.coefficient-plot text { fill: var(--muted); font: 13px system-ui, sans-serif; }
+.coefficient-plot [data-spec="R1"] text { font-weight: 750; fill: var(--ink); }
+.coefficient-plot [data-spec="R7"] text { fill: #925712; }
+.coefficient-card details { margin-top: 14px; }
+.coefficient-card summary { margin: 0 19px 10px; cursor: pointer; font-weight: 650; font-size: .88rem; }
 .table-scroll { overflow: auto; }
 table { border-collapse: collapse; width: 100%; min-width: 770px; font-size: .88rem; }
 th, td { padding: 11px 15px; border-top: 1px solid var(--subtle); text-align: right; }
@@ -138,9 +150,8 @@ tbody tr:hover { background: #f3f7f1; }
 }
 @media (max-width: 580px) {
   .shell { width: calc(100% - 28px); }
-  .masthead-inner { align-items: flex-start; }
-  .status { font-size: 0; padding: 5px 8px; }
-  .status span { margin: 0; }
+  .masthead-inner { align-items: flex-start; flex-wrap: wrap; }
+  .status { font-size: .75rem; padding: 5px 8px; }
   .navigation { gap: 0 13px; }
   .navigation a { font-size: .78rem; }
   .hero { grid-template-columns: 1fr; padding-bottom: 32px; }
@@ -150,4 +161,16 @@ tbody tr:hover { background: #f3f7f1; }
   .plot .axis-title { font-size: 10px; }
   .sensitivity-table th, .sensitivity-table td { padding: 10px 8px; }
   .sensitivity-table { font-size: .8rem; }
+  .mobile-sort { display: flex; flex-wrap: wrap; gap: 9px; width: 100%; }
+  .mobile-sort .field { flex: 1; }
+  .mobile-cards { overflow: visible; }
+  .mobile-cards table, .mobile-cards tbody, .mobile-cards tr { display: block; min-width: 0; width: 100%; }
+  .mobile-cards caption { display: block; width: 100%; }
+  .mobile-cards thead { display: none; }
+  .mobile-cards tbody tr { padding: 8px 10px; border-top: 1px solid var(--subtle); }
+  .mobile-cards tbody th { display: block; border: 0; padding: 8px; text-align: left; }
+  .mobile-cards td { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; border: 0; padding: 7px 8px; white-space: normal; overflow-wrap: anywhere; text-align: right; }
+  .mobile-cards td::before { content: attr(data-label); text-align: left; color: var(--muted); }
+  .bank-comparison td:first-child, .mobile-cards .empty-cell { display: block; text-align: left; }
+  .bank-comparison td:first-child::before, .mobile-cards .empty-cell::before { content: none; }
 }
