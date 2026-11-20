@@ -40,7 +40,7 @@ R2, R4 and R5 also run on the main sample now. The uninsured-share coefficient i
 | Dashboard data and behavior | All three displayed N, coefficient and SE values match the generated CSV. The table fits a narrow browser without horizontal scrolling. Removing the regression CSV shows an explicit error while the chart stays usable; restoring it restores the table. Intro, Method, the historical table and search still work, with no console errors. The parser rejects missing, duplicate or incompatible rows and invalid numbers. |
 | Published-file boundary | The local server returns the regression CSV unchanged and rejects raw CRSP paths, interim paths, directory listings and Git metadata with HTTP 404. No licensed row-level data is served. |
 
-[Dashboard preview from Mason's check](../docs/images/a2_regression_comparison.jpg) (taken before the main-sample change, so it shows the old labels and the 323-bank numbers).
+[Dashboard preview from Mason's check](../docs/images/a2_regression_comparison.jpg).
 
 ## A3 · Fixed as suggested; limitation disclosed
 

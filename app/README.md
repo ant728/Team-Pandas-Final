@@ -1,4 +1,4 @@
-# Checkpoint 2 dashboard
+# v1 dashboard — Checkpoint 3
 
 From the repository root, run:
 
@@ -10,34 +10,63 @@ Open <http://127.0.0.1:8765/app/>. No package install is needed to view the
 committed results. The server binds to your own machine and serves only
 the dashboard assets and the published CSVs. Press Ctrl+C to stop it.
 
-- **Intro** explains the question and shows the total and analysis sample counts.
+- **Intro** explains the question and shows the total, in-sample, and main regression sample counts.
 - **Method** explains the December 2022 Call Reports and the March 2023 event.
 - **March 2023 Results** plots only entities marked `in_sample` with both
   uninsured deposit share and buy-and-hold abnormal return (BHAR).
   Hover or select a point to see the original values. The bank selector also
-  lets you inspect entities that are not on the plot. Above the chart, the
-  failed-bank sensitivity table compares the same regression with all banks,
-  without SVB, and without both SVB and Signature.
-- **Who's Next** is a sortable, searchable view of the historical balance
-  sheets. Use the sample filter to see excluded entities and their reasons.
-  It is not a current ranking or a validated failure prediction.
+  lets you inspect entities that are not on the plot. The failed-bank
+  sensitivity table compares R1 (main sample, excluding SVB), R6 (including
+  SVB), and R3 (excluding SVB and Signature). The coefficient chart compares
+  the uninsured-deposit coefficient across R1–R10, with approximate 95%
+  intervals computed as `coef ± 1.96 × se`. R1 is the main specification;
+  R7 uses March 9–10 only, before the rescue. The specifications also differ
+  in controls, outcome, and sample, so their coefficients are sensitivity
+  comparisons rather than ten estimates of an identical model.
+- **Who's Next** shows the existing historical screen results card, with
+  First Republic and PacWest's ranks and outcomes, plus top-decile precision
+  and recall. Its searchable, sortable bank table includes screen rank,
+  top-decile flag, and the later return from the March 13 close through the
+  December 29, 2023 close. Use the event-study sample filter to see included
+  and excluded entities and their reasons; the screen has its own ranking
+  sample. This is a historical exercise, not a current ranking or a
+  validated failure prediction.
+
+The screen averages the percentile ranks of December 2022 uninsured
+deposit share and securities losses relative to equity. It flags the top
+10%, including ties at the cutoff. Neither the March event return nor the
+later outcomes enter that score. The scorecard compares the flag with FDIC
+failures from March 14 through December 31, 2023, and separately with later
+stock returns of −50% or worse. Recall is `hits / events`; precision is
+`hits / flagged`, using known outcomes for each measure. The “Overall event
+rate” column gives the outcome base rate, the expected precision of an
+uninformative flag. Missing later returns stay missing and are disclosed.
+A handful of crisis outcomes cannot establish forecasting skill.
+
+All displayed ranks, flags, returns, sample sizes, regression estimates,
+and scorecard values come from the generated outputs below. They are not
+typed into the interface.
 
 ## Data contract
 
-The bank chart and screen read [`outputs/final_dataset.csv`](../outputs/final_dataset.csv),
-produced by `code/04_build_dataset.py`. Each row is one listed entity.
-The underlying bank measures are from December 2022, as defined in the pipeline.
+### Bank data
+
+[`outputs/final_dataset.csv`](../outputs/final_dataset.csv), produced by
+`code/04_build_dataset.py`, supplies one row per listed entity for the chart,
+inspector, and bank comparison table. The underlying bank measures are from
+December 2022, as defined in the pipeline.
 
 | Field | Used for |
 |---|---|
 | `rssd_id` | Unique entity key for the table, chart, and selector |
 | `ticker`, `name` | Display labels; the entity name is used when the ticker is blank |
-| `uninsured_dep_share` | X-axis and historical screen |
+| `uninsured_dep_share` | X-axis and bank comparison column; stored as a fraction |
 | `bhar_0_2` | Y-axis: bank buy-and-hold return minus the CRSP value-weighted market buy-and-hold return over March 9, 10, and 13 |
 | `bhr_0_2` | Bank's buy-and-hold return before subtracting the market, shown in the inspector |
 | `total_assets_bn` | Dot size and table column, in billions of dollars |
 | `sec_loss_to_equity`, `htm_loss_to_equity` | Securities loss / equity sets the dot color; the table also shows the HTM-only measure |
-| `in_sample` | Official sample flag from the pipeline |
+| `in_sample` | Broad event-study eligibility flag; the scatter includes SVB |
+| `main_sample` | Main regression sample: `in_sample` excluding SVB, the event-trigger bank; Signature remains with the existing imputed delisting return |
 | `has_fdic`, `has_returns`, `positive_equity` | Explain exclusions in the inspector and historical table |
 | `dlret_imputed` | Outlines points for which the pipeline assumed a total loss at delisting |
 
@@ -46,17 +75,54 @@ saturates at the plotted sample's 95th percentile of securities losses
 relative to equity, so extreme ratios do not wash out the rest of the
 chart. The original ratios still appear in the table and tooltips.
 
-The sensitivity table reads [`outputs/regressions_v0.csv`](../outputs/regressions_v0.csv),
-generated by `code/05_regressions.py`. It selects the uninsured-deposit
-coefficient from R1 (all banks), R5 (without SVB), and R3 (without both
-imputed failures). Each row displays the sample size, coefficient, and HC3
-standard error from that output. The parser checks that all three rows use
-the same BHAR formula and controls. Missing or invalid comparisons show an
-error message while the bank chart remains usable.
+### Regression results
 
-These comparisons leave the current R1 baseline and scatter sample
-unchanged. The team still needs to justify and record its final sample
-choice for audit A2. HC3 does not correct for a common regional-bank shock.
+[`outputs/regressions_v0.csv`](../outputs/regressions_v0.csv), generated by
+`code/05_regressions.py`, has one row per specification and variable.
+
+| Field | Used for |
+|---|---|
+| `spec`, `formula`, `variable` | Identify the model, controls, and coefficient; R8–R9 use `uninsured_dep_share_w` for the winsorized predictor |
+| `coef`, `se` | Estimate, HC3 standard error, and approximate 95% interval |
+| `n` | Model's fitted sample size |
+| `t`, `p`, `r2` | Additional statistics retained in the downloadable regression output |
+
+The three-sample table uses the same BHAR formula and controls for R1, R6,
+and R3. The coefficient chart reads R1–R10 from the same file. R4 uses
+market-model CAR; R7 uses the shorter pre-rescue BHAR window. HC3 allows
+different error variances across banks, but neither HC3 nor the approximate
+intervals correct for a common regional-bank shock. R5's pre-event KRE beta
+is a partial exposure control. Regression loading errors leave the bank
+chart usable.
+
+### Historical screen
+
+[`outputs/fragility_screen.csv`](../outputs/fragility_screen.csv), generated
+by `code/08_fragility_screen.py`, has one row per ranked entity. It joins
+to the bank data by `rssd_id`; its `rank` becomes the browser's
+`screen_rank`. Entities without both screen predictors remain in the bank
+table with unavailable screen values.
+
+| Field | Used for |
+|---|---|
+| `rssd_id`, `permco`, `ticker`, `name` | Entity identifiers and labels |
+| `uninsured_dep_share`, `sec_loss_to_equity` | December 2022 screen predictors |
+| `pct_uninsured_dep_share`, `pct_sec_loss_to_equity`, `score` | Predictor percentile ranks and their mean |
+| `rank`, `flag_top10` | Screen rank and main top-decile flag |
+| `flag_top5`, `flag_top20` | Secondary cutoffs retained in the output |
+| `failed_before_window`, `fdic_failure`, `fdic_fail_date` | Distinguish earlier failures from failures in the later outcome window |
+| `post_bhr`, `severe_loss`, `post_missing_reason` | Later buy-and-hold return, −50% outcome flag, and missing-return explanation; `post_bhr` is a raw return, not event BHAR |
+
+[`outputs/fragility_screen_scorecard.csv`](../outputs/fragility_screen_scorecard.csv),
+also generated by Step 08, has one row per outcome and flag cutoff. The
+dashboard shows the rows with `cutoff = 0.1`.
+
+| Field | Used for |
+|---|---|
+| `outcome`, `label`, `cutoff` | Outcome identifier, display label, and flag threshold |
+| `events`, `flagged`, `hits` | Known-outcome counts behind recall and precision |
+| `recall`, `precision`, `base_rate` | Hit rate among events, event rate among flags, and outcome prevalence |
+| `missing` | Ranked entities excluded from that outcome's scorecard because the outcome is missing |
 
 To rebuild the results, follow the [main README](../README.md#how-to-run)
 and run `python run_all.py` with the licensed inputs under the ignored

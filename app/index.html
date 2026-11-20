@@ -19,7 +19,7 @@
         </svg>
         <span>Bank Fragility Monitor<small>Team Pandas · FIN 331</small></span>
       </a>
-      <span class="status"><span></span> Checkpoint 2 · Prototype</span>
+      <span class="status"><span></span> v1 · Checkpoint 3</span>
     </div>
     <nav class="shell navigation" aria-label="Dashboard pages">
       <a href="#intro" aria-current="page">Intro</a>
@@ -37,18 +37,19 @@
           <h1 id="intro-title">What makes a<br class="hero-break"> bank fragile?</h1>
           <p class="lede">When Silicon Valley Bank failed, did banks with more uninsured deposits and larger bond losses see their stocks fall further?</p>
           <div class="actions">
-            <a class="button primary" href="#results">Explore March 2023 <span aria-hidden="true">↗</span></a>
+            <a class="button primary" href="#results">Explore March 2023</a>
             <a class="button secondary" href="#method">Read the method</a>
           </div>
         </div>
-        <aside class="snapshot" aria-label="Prototype coverage">
+        <aside class="snapshot" aria-label="v1 sample coverage">
           <p class="eyebrow">Historical sample</p>
           <p class="snapshot-date" id="intro-quarter">December 2022</p>
           <dl class="snapshot-grid">
             <div><dt>Entities in file</dt><dd id="intro-count">—</dd></div>
-            <div><dt>Analysis sample</dt><dd id="intro-coverage">—</dd></div>
+            <div><dt>In sample</dt><dd id="intro-coverage">—</dd></div>
+            <div><dt>Main regressions</dt><dd id="intro-main">—</dd></div>
           </dl>
-          <p id="intro-source" class="snapshot-foot" aria-live="polite">Loading the checkpoint data…</p>
+          <p id="intro-source" class="snapshot-foot" aria-live="polite">Loading the v1 results…</p>
         </aside>
       </div>
 
@@ -80,6 +81,7 @@
           <h2>December 2022 Call Reports</h2>
           <p>The pipeline takes FDIC BankFind figures and rolls bank subsidiaries up to the listed entity where needed. The dashboard reads the resulting bank-level output.</p>
           <dl class="definition-list">
+            <div><dt>Linking banks to companies</dt><dd>Using the dated FFIEC NIC ownership file, each insured bank is assigned to the highest listed company that controlled it on December 31, 2022. <span id="method-link-coverage">Loading company coverage…</span></dd></div>
             <div><dt>Uninsured deposit share</dt><dd>Estimated uninsured domestic deposits ÷ domestic deposits. When banks do not report the estimate, the pipeline approximates it from balances and counts of accounts above the insurance limit.</dd></div>
             <div><dt>Securities loss / equity</dt><dd>The gap between amortized cost and fair value for held-to-maturity and available-for-sale securities, divided by reported equity.</dd></div>
             <div><dt>HTM loss / equity</dt><dd>The same ratio using only held-to-maturity securities.</dd></div>
@@ -93,6 +95,8 @@
             <div><dt>Buy-and-hold return</dt><dd>Compound the bank’s daily CRSP returns over the event window, including any delisting return. For SVB and Signature, the pipeline assumes a total loss at delisting because CRSP does not report a delisting return.</dd></div>
             <div><dt>Buy-and-hold abnormal return (BHAR)</dt><dd>Subtract the CRSP value-weighted market’s compounded return over the same window from the bank’s buy-and-hold return. This is the measure plotted.</dd></div>
             <div><dt>Analysis sample</dt><dd>The pipeline marks an entity in sample when it matches to FDIC data, has an event return, and has positive equity. Market-model CAR is a separate measure kept in the output.</dd></div>
+            <div><dt>Main regression sample</dt><dd>SVB is left out because its collapse is the event itself; Signature stays in with the pipeline’s assumed total loss at delisting. The Results page compares all three sample definitions.</dd></div>
+            <div><dt>The Who’s Next screen</dt><dd>Banks are ranked on their December 2022 uninsured share and securities losses relative to equity; the top decile is flagged. The flags are checked against outcomes after March 13, 2023.</dd></div>
           </dl>
         </article>
       </div>
@@ -105,7 +109,7 @@
         <h1 id="results-title">March 2023 Results</h1>
         <p class="lede">Did banks with more uninsured deposits experience a worse market reaction?</p>
       </div>
-      <div id="results-status" class="notice" role="status">Loading the checkpoint data…</div>
+      <div id="results-status" class="notice" role="status">Loading the v1 results…</div>
       <article class="card sensitivity-card" aria-labelledby="sensitivity-title">
         <div class="table-toolbar">
           <div>
@@ -126,7 +130,7 @@
             <tbody id="regression-rows"></tbody>
           </table>
         </div>
-        <p class="regression-note">Each model controls for HTM loss relative to equity and log assets. The main sample leaves out SVB, because its collapse is the event itself; Signature stays in with its −100% delisting return. The other two rows show how much the estimate depends on those two banks. The scatter below shows every in-sample bank, SVB included.</p>
+        <p class="regression-note">Each model controls for HTM loss relative to equity and log assets. The main sample leaves out SVB, because its collapse is the event itself; Signature stays in with its assumed total loss at delisting. The other two rows show how much the estimate depends on those two banks. The scatter below shows every in-sample bank, SVB included.</p>
         <p class="regression-note">HC3 standard errors allow different error variances across banks; they do not correct for a shared regional-bank shock. R5 in the regression output adds each bank’s beta to KRE (a regional-bank ETF) as a partial control. <a href="../outputs/regressions_v0.csv">View the generated regression output.</a></p>
       </article>
       <div id="results-grid" class="results-grid" hidden>
@@ -148,6 +152,28 @@
           <div id="bank-details" aria-live="polite"></div>
         </aside>
       </div>
+      <article class="card coefficient-card" aria-labelledby="coefficient-title">
+        <div class="table-toolbar">
+          <div>
+            <h2 id="coefficient-title">Uninsured-deposit coefficient across specifications</h2>
+            <p class="muted">Points show coefficients; lines show approximate 95% intervals.</p>
+          </div>
+        </div>
+        <p id="coefficient-status" class="regression-note" role="status">Loading coefficient estimates…</p>
+        <div id="coefficient-plot" class="coefficient-plot"></div>
+        <p id="pre-rescue-note" class="regression-note"></p>
+        <p class="regression-note">R1 is the main result. R4 uses CAR; R8 and R9 use a winsorized uninsured-deposit measure. Intervals are coefficient ± 1.96 × HC3 standard error and do not fully adjust for shared shocks.</p>
+        <details id="coefficient-details" hidden>
+          <summary>Read the estimates and specification descriptions</summary>
+          <div class="table-scroll mobile-cards">
+            <table class="sensitivity-table">
+              <caption>Coefficient estimates and approximate intervals</caption>
+              <thead><tr><th scope="col">Specification</th><th scope="col">N</th><th scope="col">Coefficient</th><th scope="col">Interval</th></tr></thead>
+              <tbody id="coefficient-rows"></tbody>
+            </table>
+          </div>
+        </details>
+      </article>
     </section>
 
     <section id="screen" class="view" aria-labelledby="screen-title" hidden>
@@ -166,17 +192,17 @@
         <p class="regression-note">Each bank gets a percentile rank on its uninsured deposit share and on its securities losses relative to equity, both from December 31, 2022 call reports. The score is the average of the two, and the top 10% are flagged. Every outcome below comes <em>after</em> March 13, 2023, so the March crash is not used to build the score.</p>
         <p id="screen-summary" class="regression-note" role="status">Loading the screen results…</p>
         <div id="screen-tables" hidden>
-          <div class="table-scroll">
+          <div class="table-scroll mobile-cards">
             <table class="sensitivity-table">
               <caption>The two named cases</caption>
               <thead><tr><th scope="col">Bank</th><th scope="col">Screen rank</th><th scope="col">Top 10%?</th><th scope="col">What happened</th></tr></thead>
               <tbody id="named-rows"></tbody>
             </table>
           </div>
-          <div class="table-scroll">
+          <div class="table-scroll mobile-cards">
             <table class="sensitivity-table">
               <caption>How well the top-10% flag did</caption>
-              <thead><tr><th scope="col">Outcome after Mar 13, 2023</th><th scope="col">Events</th><th scope="col">Caught (recall)</th><th scope="col">Flags that had it (precision)</th><th scope="col">Random flagging</th></tr></thead>
+              <thead><tr><th scope="col">Outcome after Mar 13, 2023</th><th scope="col">Events</th><th scope="col">Caught (recall)</th><th scope="col">Flags that had it (precision)</th><th scope="col">Overall event rate</th></tr></thead>
               <tbody id="scorecard-rows"></tbody>
             </table>
           </div>
@@ -197,8 +223,22 @@
               </select>
             </div>
           </div>
+          <div class="mobile-sort">
+            <label class="field" for="mobile-sort-key">Sort banks by
+              <select id="mobile-sort-key">
+                <option value="bank">Bank</option>
+                <option value="uninsured_dep_share" selected>Uninsured share</option>
+                <option value="sec_loss_to_equity">Securities loss / equity</option>
+                <option value="htm_loss_to_equity">HTM loss / equity</option>
+                <option value="total_assets_bn">Assets</option>
+                <option value="screen_rank">Screen rank</option>
+                <option value="post_bhr">Subsequent return</option>
+              </select>
+            </label>
+            <button id="mobile-sort-direction" type="button">Descending</button>
+          </div>
         </div>
-        <div class="table-scroll" tabindex="0" role="region" aria-label="Sortable bank comparison table">
+        <div class="table-scroll mobile-cards bank-comparison" tabindex="0" role="region" aria-label="Sortable bank comparison table">
           <table>
             <thead><tr>
               <th scope="col"><button data-sort="bank">Bank <span aria-hidden="true">↕</span></button></th>
@@ -216,14 +256,14 @@
         </div>
         <p class="table-note">Select a column header to sort. A dash indicates an unavailable value.</p>
       </article>
-      <p id="screen-status" class="muted" role="status">Loading the checkpoint data…</p>
+      <p id="screen-status" class="muted" role="status">Loading the v1 results…</p>
     </section>
 
     <noscript><p class="notice">Enable JavaScript to load the data and use the dashboard.</p></noscript>
   </main>
   <footer class="shell footer">
     <span>Team Pandas · FIN 331</span>
-    <span>Checkpoint 2 dashboard · Mason Friedman</span>
+    <span>v1 · Checkpoint 3 dashboard · Mason Friedman</span>
   </footer>
 </body>
 </html>
