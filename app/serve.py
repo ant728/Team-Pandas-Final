@@ -17,6 +17,9 @@ ROUTES = {
     "/outputs/regressions.csv": ("outputs/regressions.csv", "text/csv"),
     "/outputs/fragility_screen.csv": ("outputs/fragility_screen.csv", "text/csv"),
     "/outputs/fragility_screen_scorecard.csv": ("outputs/fragility_screen_scorecard.csv", "text/csv"),
+    # Today's screen (step 9). The dated file name follows TODAY_CALL_REPORT_DATE in code/config.py.
+    "/outputs/fragility_screen_today_summary.csv": ("outputs/fragility_screen_today_summary.csv", "text/csv"),
+    "/outputs/fragility_screen_20260930.csv": ("outputs/fragility_screen_20260930.csv", "text/csv"),
 }
 
 

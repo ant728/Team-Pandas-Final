@@ -1,0 +1,3 @@
+report_date,date,banks_ranked,median_uninsured_share,p90_uninsured_share,median_sec_loss_to_equity,p90_sec_loss_to_equity,at_or_above_frc_both,at_or_above_frc_uninsured,at_or_above_frc_sec_loss,frc_uninsured_benchmark,frc_sec_loss_benchmark
+20221231,"Dec 31, 2022",337,0.365319,0.560435,0.211688,0.536035,8,14,110,0.677131,0.300437
+20260930,09/30/2026,276,0.362585,0.523345,0.128417,0.314131,0,4,29,0.677131,0.300437

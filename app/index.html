@@ -209,6 +209,33 @@
         </div>
         <p class="regression-note">A handful of events can't prove forecasting skill: read these as descriptive. Full report: <a href="../outputs/fragility_screen.csv">per-bank screen output</a>.</p>
       </article>
+      <article class="card sensitivity-card" aria-labelledby="today-title">
+        <div class="table-toolbar">
+          <div>
+            <h2 id="today-title">Who’s next today</h2>
+            <p id="today-date" class="muted">Latest call reports</p>
+          </div>
+        </div>
+        <p class="regression-note">The same score, applied to the latest call reports. Because it ranks banks against each other, it always flags a top 10%, however safe banks are. The first table shows how fragile that group is next to December 2022.</p>
+        <p id="today-status" class="regression-note" role="status">Loading today’s screen…</p>
+        <div id="today-tables" hidden>
+          <div class="table-scroll mobile-cards">
+            <table class="sensitivity-table">
+              <caption>Then and now</caption>
+              <thead><tr><th scope="col">Measure</th><th scope="col" id="today-col-then">Dec 31, 2022</th><th scope="col" id="today-col-now">Today</th></tr></thead>
+              <tbody id="today-compare"></tbody>
+            </table>
+          </div>
+          <div class="table-scroll mobile-cards">
+            <table class="sensitivity-table">
+              <caption id="today-list-caption">The top 10% today</caption>
+              <thead><tr><th scope="col">Rank</th><th scope="col">Bank</th><th scope="col">Assets ($B)</th><th scope="col">Uninsured share</th><th scope="col">Securities loss / equity</th></tr></thead>
+              <tbody id="today-rows"></tbody>
+            </table>
+          </div>
+        </div>
+        <p class="regression-note">A current list, not a forecast: there are no outcomes yet. It covers companies listed on Sep 30, 2024, the end of the latest NY Fed link; banks listed since then are missing. Full report: <a href="../outputs/fragility_screen_today_summary.csv">comparison output</a>.</p>
+      </article>
       <article id="screen-card" class="card table-card" hidden>
         <div class="table-toolbar">
           <div><h2>Compare banks</h2><p id="table-count" class="muted" role="status"></p></div>

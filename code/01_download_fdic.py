@@ -2,6 +2,7 @@
 
 Outputs:
   data/raw/fdic_financials_20221231.csv    one row per bank (CERT) on the report date
+  data/raw/fdic_financials_20260930.csv    the same fields for the latest quarter, for today's screen (step 9)
   data/raw/fdic_institutions.csv           CERT -> the bank's own RSSD ID (FED_RSSD), for all banks ever
   data/raw/fdic_failures_2023.csv          every FDIC-insured bank that failed in 2023 (for the screen, step 8)
 
@@ -11,7 +12,7 @@ on the report date, not today's.
 import pandas as pd
 import requests
 
-from config import CALL_REPORT_DATE, FDIC_FIELDS, RAW
+from config import CALL_REPORT_DATE, FDIC_FIELDS, RAW, TODAY_CALL_REPORT_DATE
 from provenance import log_download
 
 API = "https://api.fdic.gov/banks"
@@ -35,14 +36,16 @@ def fetch_all(endpoint, params):
 def main():
     RAW.mkdir(parents=True, exist_ok=True)
 
-    fin, vintage = fetch_all("financials", {"filters": f"REPDTE:{CALL_REPORT_DATE}",
-                                            "fields": ",".join(FDIC_FIELDS),
-                                            "sort_by": "CERT", "sort_order": "ASC"})
-    assert fin["CERT"].is_unique, "one row per bank per quarter"
-    path = RAW / f"fdic_financials_{CALL_REPORT_DATE}.csv"
-    fin.to_csv(path, index=False)
-    log_download(path, f"{API}/financials", vintage=vintage, note=f"all banks, REPDTE={CALL_REPORT_DATE}")
-    print(f"financials: {len(fin)} banks on {CALL_REPORT_DATE}")
+    for date in (CALL_REPORT_DATE, TODAY_CALL_REPORT_DATE):
+        fin, vintage = fetch_all("financials", {"filters": f"REPDTE:{date}",
+                                                "fields": ",".join(FDIC_FIELDS),
+                                                "sort_by": "CERT", "sort_order": "ASC"})
+        assert len(fin) > 0, f"the FDIC API has no call reports for {date}"
+        assert fin["CERT"].is_unique, "one row per bank per quarter"
+        path = RAW / f"fdic_financials_{date}.csv"
+        fin.to_csv(path, index=False)
+        log_download(path, f"{API}/financials", vintage=vintage, note=f"all banks, REPDTE={date}")
+        print(f"financials: {len(fin)} banks on {date}")
 
     inst, vintage = fetch_all("institutions", {"fields": "CERT,FED_RSSD,NAME",
                                                "sort_by": "CERT", "sort_order": "ASC"})

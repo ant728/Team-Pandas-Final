@@ -1,3 +1,4 @@
+import { parseTodayScreen, parseTodaySummary } from "./data.mjs";
 import { parseDashboardCsv, parseRegressionComparisons, parseCoefficientComparisons, parseScorecardCsv, parseScreenCsv } from "./data.mjs";
 
 const byId = (id) => document.getElementById(id);
@@ -299,6 +300,61 @@ async function start() {
   }
 }
 
+async function loadToday() {
+  try {
+    const get = async (file) => {
+      const response = await fetch(new URL("../outputs/" + file, import.meta.url), { cache: "no-store" });
+      if (!response.ok) throw new Error(file + " returned HTTP " + response.status + ".");
+      return response.text();
+    };
+    const [then, now] = parseTodaySummary(await get("fragility_screen_today_summary.csv"));
+    const list = parseTodayScreen(await get("fragility_screen_" + now.report_date + ".csv"));
+    const nowLabel = new Date(Date.UTC(+now.report_date.slice(0, 4), +now.report_date.slice(4, 6) - 1,
+      +now.report_date.slice(6))).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" });
+    byId("today-date").textContent = "Call reports of " + nowLabel;
+    byId("today-col-then").textContent = then.date;
+    byId("today-col-now").textContent = nowLabel;
+    const one = new Intl.NumberFormat("en-US", { style: "percent", maximumFractionDigits: 1 });
+    const two = new Intl.NumberFormat("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const bench = "First Republic\u2019s Dec 2022 levels (" + one.format(now.frc_uninsured_benchmark) + " uninsured, "
+      + two.format(now.frc_sec_loss_benchmark) + " loss / equity)";
+    const measures = [
+      ["Banks ranked", (r) => r.banks_ranked],
+      ["Median uninsured share", (r) => one.format(r.median_uninsured_share)],
+      ["90th percentile, uninsured share", (r) => one.format(r.p90_uninsured_share)],
+      ["Median securities loss / equity", (r) => two.format(r.median_sec_loss_to_equity)],
+      ["90th percentile, securities loss / equity", (r) => two.format(r.p90_sec_loss_to_equity)],
+      ["Banks at or above " + bench + " on both", (r) => r.at_or_above_frc_both],
+    ];
+    byId("today-compare").replaceChildren(...measures.map(([label, value]) => {
+      const tr = element("tr");
+      const th = element("th", label);
+      th.scope = "row";
+      const a = element("td", String(value(then)));
+      a.dataset.label = then.date;
+      const b = element("td", String(value(now)));
+      b.dataset.label = nowLabel;
+      tr.append(th, a, b);
+      return tr;
+    }));
+    const flagged = list.filter((r) => r.flag_top10).sort((a, b) => a.rank - b.rank);
+    byId("today-list-caption").textContent = "The top 10% today: " + flagged.length + " of " + list.length + " banks";
+    byId("today-rows").replaceChildren(...flagged.map((r) => {
+      const tr = element("tr");
+      const cells = [["Rank", "#" + r.rank], ["Bank", r.ticker === r.name ? r.name : r.ticker + " \u00b7 " + r.name],
+        ["Assets ($B)", number.format(r.total_assets_bn)], ["Uninsured share", one.format(r.uninsured_dep_share)],
+        ["Securities loss / equity", two.format(r.sec_loss_to_equity)]];
+      tr.append(...cells.map(([label, text]) => { const td = element("td", text); td.dataset.label = label; return td; }));
+      return tr;
+    }));
+    byId("today-status").textContent = then.at_or_above_frc_both + " banks matched First Republic\u2019s Dec 2022 profile on both "
+      + "measures in Dec 2022; " + now.at_or_above_frc_both + " do on " + nowLabel + ".";
+    byId("today-tables").hidden = false;
+  } catch (error) {
+    byId("today-status").textContent = "Today\u2019s screen unavailable: " + error.message;
+  }
+}
+
 async function loadScreen() {
   try {
     const get = async (file) => {
@@ -483,6 +539,7 @@ for (const button of document.querySelectorAll("[data-sort]")) {
 }
 new ResizeObserver(() => requestAnimationFrame(drawChart)).observe(byId("plot"));
 new ResizeObserver(() => requestAnimationFrame(drawCoefficientChart)).observe(byId("coefficient-plot"));
+loadToday();
 showPage();
 start();
 loadRegressionComparisons();

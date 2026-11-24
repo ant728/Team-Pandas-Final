@@ -269,3 +269,29 @@ export function parseScorecardCsv(text) {
     precision: toNumber(row.precision), base_rate: toNumber(row.base_rate), missing: toNumber(row.missing),
   }));
 }
+
+/** Step 9's comparison of Dec 2022 with the latest quarter (one row per date, oldest first). */
+export function parseTodaySummary(text) {
+  const numbers = ["banks_ranked", "median_uninsured_share", "p90_uninsured_share", "median_sec_loss_to_equity",
+    "p90_sec_loss_to_equity", "at_or_above_frc_both", "at_or_above_frc_uninsured", "at_or_above_frc_sec_loss",
+    "frc_uninsured_benchmark", "frc_sec_loss_benchmark"];
+  const rows = readTable(text, ["report_date", "date", ...numbers], "Today summary").map((row) => {
+    const out = { report_date: row.report_date.trim(), date: row.date.trim() };
+    for (const name of numbers) out[name] = toNumber(row[name]);
+    return out;
+  });
+  if (rows.length !== 2 || !/^\d{8}$/.test(rows[1].report_date)) {
+    throw new Error("The today summary needs two rows: Dec 2022 and the latest report date.");
+  }
+  return rows;
+}
+
+/** Step 9's ranked list for the latest quarter. */
+export function parseTodayScreen(text) {
+  return readTable(text, ["rank", "ticker", "name", "total_assets_bn", "uninsured_dep_share", "sec_loss_to_equity",
+    "flag_top10"], "Today's screen").map((row) => ({
+    rank: toNumber(row.rank), ticker: row.ticker.trim(), name: row.name.trim(),
+    total_assets_bn: toNumber(row.total_assets_bn), uninsured_dep_share: toNumber(row.uninsured_dep_share),
+    sec_loss_to_equity: toNumber(row.sec_loss_to_equity), flag_top10: toBool(row.flag_top10),
+  }));
+}

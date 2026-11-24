@@ -83,6 +83,9 @@ MCAP_DATE = "2022-12-30"              # last trading day before the call report 
 BANK_CENTRIC_MIN_EQ_TO_MCAP = 0.20    # bank subsidiaries' equity / company market value
 BANKING_NAICS_PREFIXES = ("5221", "551111", "551112")  # NIC ACT_PRIM_CD codes that count as banking
 
+# Today's screen (instructor audit B1, specs_tried.md #26-#27): the same score on the latest call reports.
+TODAY_CALL_REPORT_DATE = "20260930"   # latest quarter in the FDIC API when we ran it (Nov 24, 2026)
+
 # Out-of-sample fragility screen (step 8; rules in specs_tried.md, written 2026-11-10, details #21-#25).
 SCREEN_PREDICTORS = ["uninsured_dep_share", "sec_loss_to_equity"]
 SCREEN_MAIN_CUTOFF = 0.10                  # flag the top 10%; 5% and 20% are secondary only

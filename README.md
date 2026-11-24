@@ -4,7 +4,7 @@
 
 **Team:** Andrew Temo (ant728), Mason Friedman (MasonF9897897), Morgan Waddell (mow228-boop), Ryan Carr (rcarr37)
 
-**Status (Checkpoint 3, v1):** the March 2023 event study on the full sample (333 banks, 10 specifications) plus the out-of-sample who's-next screen. Audits: [self-audit, Checkpoint 2](audits/01_self_audit.md) · [instructor audit](audits/02_instructor_audit.md) · [our response](audits/03_audit_response.md) · [self-audit, Checkpoint 3](audits/04_self_audit.md). Proposal: [`PROPOSAL.md`](PROPOSAL.md) (HW8, Nov 14; its numbers are from that date).
+**Status (final, in progress):** the March 2023 event study on the full sample (333 banks, 10 specifications), the out-of-sample who's-next screen, and the same screen on today's call reports (Sep 30, 2026). Audits: [self-audit, CP2](audits/01_self_audit.md) · [instructor, CP2](audits/02_instructor_audit.md) · [our response](audits/03_audit_response.md) · [self-audit, CP3](audits/04_self_audit.md) · [instructor, CP3](audits/05_instructor_audit.md) · [our response](audits/06_audit_response.md). Proposal: [`PROPOSAL.md`](PROPOSAL.md) (HW8, Nov 14; its numbers are from that date).
 
 ## Our project: bank fragility (Seed 6)
 
@@ -25,6 +25,7 @@ Current outputs:
 - [`outputs/regressions.md`](outputs/regressions.md): the cross-sectional regressions, with magnitudes. **Main result (R1, 332 banks, SVB left out as the trigger):** a one-SD higher uninsured share (16 pp of domestic deposits) goes with a 1.8 pp lower three-day BHAR (coefficient −0.112, p = 0.047); the average bank's BHAR was −10.0%. With SVB included it's −0.149 (p = 0.023); without SVB and Signature, −0.065 (p = 0.032).
 - [`outputs/summary_stats.csv`](outputs/summary_stats.csv): descriptive statistics
 - [`outputs/fragility_screen.md`](outputs/fragility_screen.md): **who's next.** A screen built only from Dec 2022 call reports (uninsured share and securities losses, top 10% flagged) flags First Republic (rank 28 of 337), the only listed bank that failed after Mar 13, 2023, but not PacWest (rank 65). It catches 2 of the 4 stocks that lost half their value by year-end. The flagged group's precision is low (1 failure among 34 flags), so this is a shortlist, not a forecast. Rules written before ranking: `specs_tried.md`.
+- [`outputs/fragility_screen_today.md`](outputs/fragility_screen_today.md): **who's next today.** The same score on the Sep 30, 2026 call reports ranks 276 listed banks; the top 10% is 28 banks. Because the score is relative, we also compare levels with Dec 2022: securities losses relative to equity roughly halved (median 0.21 → 0.13), uninsured shares are unchanged at the median (36%), and **no bank today matches First Republic's Dec 2022 profile on both measures (8 did in Dec 2022)**. It covers companies listed on Sep 30, 2024, the end of the latest NY Fed link (`specs_tried.md` #26–#27).
 - [`outputs/hand_checks.md`](outputs/hand_checks.md): independent recomputations, at least one for every step, all passing
 
 ### Dashboard
@@ -49,6 +50,7 @@ Pages: Intro, Method, March 2023 Results (scatter, bank inspector, and the faile
 | 6 | `code/06_hand_checks.py` | raw files, outputs | `outputs/hand_checks.md` (`run_all.py` runs this step **last**, so it can recheck step 8 too) |
 | 7 | `code/07_zions_reconciliation.py` | sourced Zions disclosures and raw FDIC report | `outputs/zions_reconciliation.csv`, `outputs/zions_measure_comparison.csv` |
 | 8 | `code/08_fragility_screen.py` | `outputs/final_dataset.csv`, FDIC failures, CRSP after Mar 13 | `outputs/fragility_screen.csv` (one row per bank), `outputs/fragility_screen.md` (report), `outputs/fragility_screen_scorecard.csv` |
+| 9 | `code/09_screen_today.py` | `outputs/final_dataset.csv`, `outputs/fragility_screen.csv`, Sep 30, 2026 call reports, NIC relationships | `outputs/fragility_screen_20260930.csv` (today's ranking), `outputs/fragility_screen_today.md` (report), `outputs/fragility_screen_today_summary.csv` (Dec 2022 vs. today) |
 
 Settings (event dates, windows, call report quarter, field list, delisting assumption) live in one place: `code/config.py`.
 
@@ -60,7 +62,7 @@ Settings (event dates, windows, call report quarter, field list, delisting assum
 | Input | Source | How we get it again | Pulled |
 |---|---|---|---|
 | Sample universe (bank ↔ CRSP link) | NY Fed CRSP–FRB link, Sep 30, 2024 vintage ([page](https://www.newyorkfed.org/research/banking_research/crsp-frb)) | `code/00_build_universe.py` | See `data/provenance_log.csv` |
-| Call report fields, Q4 2022, all banks | FDIC BankFind API, `https://api.fdic.gov/banks/financials` ([field definitions](https://api.fdic.gov/banks/docs/risview_properties.yaml)) | `code/01_download_fdic.py` | See `data/provenance_log.csv` (logs the API's data vintage too) |
+| Call report fields, Q4 2022 and Q3 2026 (for today's screen), all banks | FDIC BankFind API, `https://api.fdic.gov/banks/financials` ([field definitions](https://api.fdic.gov/banks/docs/risview_properties.yaml)) | `code/01_download_fdic.py` | See `data/provenance_log.csv` (logs the API's data vintage too) |
 | Bank IDs (CERT → RSSD) | FDIC BankFind API, `https://api.fdic.gov/banks/institutions` | `code/01_download_fdic.py` | See `data/provenance_log.csv` |
 | 2023 bank failures | FDIC BankFind API, `https://api.fdic.gov/banks/failures` | `code/01_download_fdic.py` | See `data/provenance_log.csv` |
 | CRSP daily returns, delistings, market return | Pulled by Prof. Bowen from WRDS (legacy CRSP daily: `dsf`, `dsenames`, `dsedelist`, `dsi`) on 2026-11-06, at our request: the 343 PERMCOs in `requests/crsp_permcos.csv`, Jan 2022–Dec 2023; variables RET, RETX, DLRET/DLSTCD (delisting), PRC, SHROUT, VOL, TICKER, COMNAM, SHRCD, EXCHCD, and VWRETD (market) | With WRDS access, run [`code/wrds/pull_crsp.do`](code/wrds/pull_crsp.do) (the Stata script used for the pull) next to `requests/crsp_permcos.csv` | Received Nov 10, 2026 |
@@ -129,7 +131,7 @@ STATUS.md            # Checkpoint 1 memo
 specs_tried.md       # every specification we run
 run_all.py           # rebuilds everything from raw inputs
 requirements.txt
-code/                # config.py, 00_build_universe ... 08_fragility_screen (see Pipeline); wrds/pull_crsp.do (the CRSP pull)
+code/                # config.py, 00_build_universe ... 09_screen_today (see Pipeline); wrds/pull_crsp.do (the CRSP pull)
 requests/            # the PERMCO list we sent for the CRSP pull
 data/raw/            # git-ignored; recreated by the download code, except crsp/ (licensed) and nic/ (manual FFIEC downloads)
 data/interim/        # git-ignored; row-level CRSP event-day returns
