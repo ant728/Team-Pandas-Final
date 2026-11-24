@@ -66,4 +66,4 @@ Target: the final audit (presentations Dec 1/3). Anything that changes the sampl
 | 7 | Magnitudes, not just stars | **OK** | A 1 SD (16 pp) higher uninsured share goes with a 1.8 pp lower three-day BHAR, against an average of −10.0% (`outputs/regressions_v0.md`). The screen reports recall and precision against base rates. |
 | 8 | Checks by hand | **OK** | 18 independent recomputations, at least one per step, all passing (`outputs/hand_checks.md`). |
 | 9 | Honest limits | **OK** | 11 threats in the README, updated with R5–R10; the Monday effect and the screen's low precision are stated where the results are. |
-| 10 | We understand it | **Not yet** | The new pieces (NIC walk, main sample, KRE beta, bank-centric rule, the screen) need a team walkthrough before Saturday. |
+| 10 | We understand it | **OK** | Updated Nov 24, 2026: the team walked through the new pieces together (NIC walk, main sample, KRE beta, bank-centric rule, the screen), using a written walkthrough with practice questions, so each member can explain each step. |
