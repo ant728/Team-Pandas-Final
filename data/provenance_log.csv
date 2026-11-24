@@ -40,3 +40,13 @@ data/raw/fdic_institutions.csv,https://api.fdic.gov/banks/institutions,2026-11-1
 data/raw/fdic_failures_2023.csv,https://api.fdic.gov/banks/failures,2026-11-18T16:31:40Z,failures_1787667198788,all FDIC-insured bank failures in 2023
 data/raw/kre_daily.csv,yfinance Ticker('KRE').history(auto_adjust=True),2026-11-18T16:31:42Z,yfinance 1.7.0,regional-bank index for kre_beta; 2022-01-01 to 2023-03-31
 data/raw/prices_check.csv,yfinance Ticker.history(auto_adjust=True),2026-11-18T16:31:42Z,yfinance 1.7.0,cross-check only; 2023-03-01 to 2023-03-20
+data/raw/fdic_financials_20221231.csv,https://api.fdic.gov/banks/financials,2026-11-24T16:12:14Z,risview_20261119164126,"all banks, REPDTE=20221231"
+data/raw/fdic_financials_20260930.csv,https://api.fdic.gov/banks/financials,2026-11-24T16:12:18Z,risview_20261119164126,"all banks, REPDTE=20260930"
+data/raw/fdic_institutions.csv,https://api.fdic.gov/banks/institutions,2026-11-24T16:12:24Z,institutions_20261120100008,"CERT -> FED_RSSD, active and inactive banks"
+data/raw/fdic_failures_2023.csv,https://api.fdic.gov/banks/failures,2026-11-24T16:12:25Z,failures_1795533373234,all FDIC-insured bank failures in 2023
+data/raw/nyfed_crsp_frb_link.csv,https://www.newyorkfed.org/medialibrary/media/research/banking_research/data/crsp_20240930v2.csv,2026-11-24T16:15:10Z,crsp_20240930v2,RSSD -> PERMCO link with date ranges
+data/raw/fdic_financials_20221231.csv,https://api.fdic.gov/banks/financials,2026-11-24T16:15:14Z,risview_20261119164126,"all banks, REPDTE=20221231"
+data/raw/fdic_financials_20260930.csv,https://api.fdic.gov/banks/financials,2026-11-24T16:15:17Z,risview_20261119164126,"all banks, REPDTE=20260930"
+data/raw/fdic_institutions.csv,https://api.fdic.gov/banks/institutions,2026-11-24T16:15:21Z,institutions_20261120100008,"CERT -> FED_RSSD, active and inactive banks"
+data/raw/fdic_failures_2023.csv,https://api.fdic.gov/banks/failures,2026-11-24T16:15:22Z,failures_1795533373234,all FDIC-insured bank failures in 2023
+data/raw/prices_check.csv,yfinance Ticker.history(auto_adjust=True),2026-11-24T16:15:25Z,yfinance 1.7.0,cross-check only; 2023-03-01 to 2023-03-20

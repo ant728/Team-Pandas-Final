@@ -28,8 +28,8 @@ SUM_FIELDS = ["ASSET", "DEP", "DEPDOM", "uninsured", "uninsured_reported", "EQTO
               "SC", "SCHA", "SCHF", "SCAA", "SCAF"]
 
 
-def bank_level():
-    fin = pd.read_csv(RAW / f"fdic_financials_{CALL_REPORT_DATE}.csv")
+def bank_level(date=CALL_REPORT_DATE):
+    fin = pd.read_csv(RAW / f"fdic_financials_{date}.csv")
     inst = pd.read_csv(RAW / "fdic_institutions.csv")[["CERT", "FED_RSSD"]]
     fin = fin.merge(inst, on="CERT", how="left", validate="1:1")
     assert fin["CERT"].is_unique
@@ -41,7 +41,7 @@ def bank_level():
     return fin
 
 
-def controlling_parents():
+def controlling_parents(date=CALL_REPORT_DATE):
     """offspring RSSD -> its controlling parents' RSSDs, for relationships active on the call report date."""
     files = [NIC_RELATIONSHIPS]
     if not NIC_RELATIONSHIPS.exists():
@@ -51,9 +51,9 @@ def controlling_parents():
             "and save the ZIP there. See README provenance.")
     rel = pd.read_csv(files[0], low_memory=False)
     rel.columns = rel.columns.str.lstrip("#").str.strip()
-    d = int(CALL_REPORT_DATE)
+    d = int(date)
     active = rel[(rel["CTRL_IND"] == 1) & (rel["DT_START"] <= d) & (rel["DT_END"] >= d)]
-    print(f"NIC relationships: {len(rel)} rows, {len(active)} controlling and active on {CALL_REPORT_DATE} "
+    print(f"NIC relationships: {len(rel)} rows, {len(active)} controlling and active on {date} "
           f"({files[0].name})")
     return active.groupby("ID_RSSD_OFFSPRING")["ID_RSSD_PARENT"].apply(list).to_dict()
 
@@ -86,9 +86,9 @@ def listed_controller(rssd, parents, sample):
     return next(iter(best), None)
 
 
-def assign_entities(fin, uni):
+def assign_entities(fin, uni, date=CALL_REPORT_DATE):
     sample = set(uni["rssd_id"])
-    parents = controlling_parents()
+    parents = controlling_parents(date)
     via_bank = fin["FED_RSSD"].where(fin["FED_RSSD"].isin(sample))
     via_nic = fin["FED_RSSD"].map(lambda r: listed_controller(r, parents, sample) if pd.notna(r) else None)
     # A bank can't be both its own listed entity and owned by a different listed one.

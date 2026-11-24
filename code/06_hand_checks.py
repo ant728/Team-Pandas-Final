@@ -10,7 +10,7 @@ import numpy as np
 import pandas as pd
 
 from config import (CALL_REPORT_DATE, CRSP_DAILY, CRSP_MARKET, ESTIMATION_WINDOW, EVENT_DAY0, INSURANCE_LIMIT_THOUSANDS,
-                    KRE_PRICES, NIC_RELATIONSHIPS, OUTPUTS, RAW)
+                    KRE_PRICES, NIC_RELATIONSHIPS, OUTPUTS, RAW, TODAY_CALL_REPORT_DATE)
 from ffiec_comparison import FFIEC_ZIP, comparison_table, write_report as write_ffiec_report
 
 final = pd.read_csv(OUTPUTS / "final_dataset.csv").set_index("ticker")
@@ -142,7 +142,7 @@ XtX_inv = np.linalg.inv(X.T @ X)
 h = np.einsum("ij,jk,ik->i", X, XtX_inv, X)           # leverage of each bank
 meat = X.T @ (X * (e ** 2 / (1 - h) ** 2)[:, None])
 se_hc3 = np.sqrt(np.diag(XtX_inv @ meat @ XtX_inv))
-reg = pd.read_csv(OUTPUTS / "regressions_v0.csv")
+reg = pd.read_csv(OUTPUTS / "regressions.csv")
 r1 = reg[reg["spec"].str.startswith("R1") & reg["variable"].eq("uninsured_dep_share")].iloc[0]
 check("R1 uninsured-share coefficient, recomputed with numpy", r1["coef"], b[1], 1e-5,
       "numpy least squares on outputs/final_dataset.csv (in-sample rows)")
@@ -172,6 +172,18 @@ with open(CRSP_DAILY, newline="") as f:
             growth *= (1 + ret) * (1 + dl)
 check("First Republic return, Mar 13 close to Dec 29 close (with delisting return)", screen.at["FRC", "post_bhr"],
       growth - 1, 1e-6, "raw CRSP rows for FRC, including its delisting return")
+
+# --- Step 9, today's screen: JPMorgan's uninsured share on the latest call reports, by hand -----------
+today = pd.read_csv(OUTPUTS / f"fragility_screen_{TODAY_CALL_REPORT_DATE}.csv").set_index("ticker")
+unins = dom = 0.0
+with open(RAW / f"fdic_financials_{TODAY_CALL_REPORT_DATE}.csv", newline="") as f:
+    for r in csv.DictReader(f):
+        if r["RSSDHCR"] and int(float(r["RSSDHCR"])) == 1039502:    # JPMorgan Chase & Co.
+            unins += float(r["DEPUNINS"])
+            dom += float(r["DEPDOM"])
+check(f"JPMorgan uninsured share on {TODAY_CALL_REPORT_DATE} (today's screen), summed by hand",
+      today.at["JPM", "uninsured_dep_share"], unins / dom, 1e-6,   # the CSV keeps 6 significant digits
+      f"raw FDIC rows for {TODAY_CALL_REPORT_DATE} with RSSDHCR = 1039502")
 
 # --- FDIC API values vs. the FFIEC CDR Q4 2022 bulk file -------------------------------------
 if FFIEC_ZIP.exists():

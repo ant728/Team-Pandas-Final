@@ -13,6 +13,7 @@ STEPS = [
     "05_regressions.py",
     "07_zions_reconciliation.py",
     "08_fragility_screen.py",
+    "09_screen_today.py",
     "06_hand_checks.py",   # runs last so it can recheck every step's output, including step 8
 ]
 
