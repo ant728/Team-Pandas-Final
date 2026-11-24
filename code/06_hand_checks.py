@@ -142,7 +142,7 @@ XtX_inv = np.linalg.inv(X.T @ X)
 h = np.einsum("ij,jk,ik->i", X, XtX_inv, X)           # leverage of each bank
 meat = X.T @ (X * (e ** 2 / (1 - h) ** 2)[:, None])
 se_hc3 = np.sqrt(np.diag(XtX_inv @ meat @ XtX_inv))
-reg = pd.read_csv(OUTPUTS / "regressions_v0.csv")
+reg = pd.read_csv(OUTPUTS / "regressions.csv")
 r1 = reg[reg["spec"].str.startswith("R1") & reg["variable"].eq("uninsured_dep_share")].iloc[0]
 check("R1 uninsured-share coefficient, recomputed with numpy", r1["coef"], b[1], 1e-5,
       "numpy least squares on outputs/final_dataset.csv (in-sample rows)")

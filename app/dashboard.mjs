@@ -364,7 +364,7 @@ async function loadScreen() {
 
 async function loadRegressionComparisons() {
   try {
-    const url = new URL("../outputs/regressions_v0.csv", import.meta.url);
+    const url = new URL("../outputs/regressions.csv", import.meta.url);
     const response = await fetch(url, { cache: "no-store" });
     if (!response.ok) throw new Error("Regression output returned HTTP " + response.status + ".");
     const text = await response.text();

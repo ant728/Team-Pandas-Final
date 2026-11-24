@@ -14,7 +14,7 @@ ROUTES = {
     "/app/dashboard.mjs": ("app/dashboard.mjs", "text/javascript"),
     "/app/data.mjs": ("app/data.mjs", "text/javascript"),
     "/outputs/final_dataset.csv": ("outputs/final_dataset.csv", "text/csv"),
-    "/outputs/regressions_v0.csv": ("outputs/regressions_v0.csv", "text/csv"),
+    "/outputs/regressions.csv": ("outputs/regressions.csv", "text/csv"),
     "/outputs/fragility_screen.csv": ("outputs/fragility_screen.csv", "text/csv"),
     "/outputs/fragility_screen_scorecard.csv": ("outputs/fragility_screen_scorecard.csv", "text/csv"),
 }
