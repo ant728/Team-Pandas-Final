@@ -1,6 +1,8 @@
 **Team Name:** Team Pandas  
 **Team Members:** Andrew Temo, Mason Friedman, Ryan Carr, Morgan Waddell  
 
+*Note (Nov 24, 2026): this proposal was written for HW8 on Nov 14. Some numbers have changed since: an ownership-link fix raised the sample to 333 banks, the who's-next screen is now done and also runs on today's call reports, and 19 hand checks pass. Current results are in the [README](README.md).*
+
 ## Project Proposal Question
 
 Who Ran After SVB? Uninsured deposits, and unrecognized bond losses, as drivers of Bank downturns/failures, and who’s next?
