@@ -14,7 +14,8 @@ STEPS = [
     "07_zions_reconciliation.py",
     "08_fragility_screen.py",
     "09_screen_today.py",
-    "06_hand_checks.py",   # runs last so it can recheck every step's output, including step 8
+    "10_placebo_windows.py",
+    "06_hand_checks.py",   # runs last so it can recheck every step's output, including steps 8-10
 ]
 
 for step in STEPS:
