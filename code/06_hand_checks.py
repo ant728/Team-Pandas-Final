@@ -185,6 +185,39 @@ check(f"JPMorgan uninsured share on {TODAY_CALL_REPORT_DATE} (today's screen), s
       today.at["JPM", "uninsured_dep_share"], unins / dom, 1e-6,   # the CSV keeps 6 significant digits
       f"raw FDIC rows for {TODAY_CALL_REPORT_DATE} with RSSDHCR = 1039502")
 
+# --- Step 10, placebo windows: one window's coefficient rebuilt from raw CRSP rows, and the window count ----
+placebo = pd.read_csv(OUTPUTS / "placebo_windows.csv").set_index("day0")
+with open(CRSP_MARKET, newline="") as f:
+    days_2022 = sorted(r["date"] for r in csv.DictReader(f) if r["date"].startswith("2022"))
+check("Placebo windows: 2022 trading days minus 2 (each window needs days 0 to +2 in 2022)", len(placebo),
+      len(days_2022) - 2, 0, "crsp_market_vwretd.csv dates, counted by hand")
+
+pw = ["2022-06-13", "2022-06-14", "2022-06-15"]        # the week of the 75 bp Fed hike, chosen by hand
+mkt = 1.0
+with open(CRSP_MARKET, newline="") as f:
+    for r in csv.DictReader(f):
+        if r["date"] in pw:
+            mkt *= 1 + float(r["vwretd"])
+growth, ndays = {}, {}
+with open(CRSP_DAILY, newline="") as f:
+    for r in csv.DictReader(f):
+        if r["date"] in pw and r["ret"] not in ("", "B", "C"):
+            p = int(r["permno"])
+            growth[p] = growth.get(p, 1.0) * (1 + float(r["ret"]))
+            ndays[p] = ndays.get(p, 0) + 1
+ms = pd.read_csv(OUTPUTS / "final_dataset.csv")
+ms = ms[ms["main_sample"]]
+X, y = [], []
+for r in ms.itertuples():
+    p = int(r.permno)
+    if ndays.get(p) == 3:
+        X.append([1.0, r.uninsured_dep_share, r.htm_loss_to_equity, r.log_assets])
+        y.append((growth[p] - 1) - (mkt - 1))
+X, y = np.array(X), np.array(y)
+beta_hand = np.linalg.solve(X.T @ X, X.T @ y)[1]       # OLS by the normal equations
+check(f"Placebo window {pw[0]}: uninsured-share coefficient by the normal equations ({len(y)} banks)",
+      placebo.at[pw[0], "coef"], beta_hand, 1e-6, "raw CRSP rows for Jun 13-15, 2022 and outputs/final_dataset.csv")
+
 # --- FDIC API values vs. the FFIEC CDR Q4 2022 bulk file -------------------------------------
 if FFIEC_ZIP.exists():
     ffiec = comparison_table()
