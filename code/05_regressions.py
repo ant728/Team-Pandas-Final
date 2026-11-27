@@ -33,6 +33,7 @@ SPECS = {
     # specs_tried.md #20: drop entities whose banks are a small part of the company.
     "R10 R1 on bank-centric companies only": (BASE, "bank_centric"),
 }
+MAGNITUDE_SPECS = ("R1", "R3", "R6", "R10")   # same-outcome specs on unwinsorized uninsured share
 WINSOR_COLS = ["uninsured_dep_share", "htm_loss_to_equity", "sec_loss_to_equity"]
 WINSOR_PCT = (0.01, 0.99)
 
@@ -75,13 +76,16 @@ def main():
              "(R4: market-model CAR; R7: Mar 9-10 only). Main sample: every in-sample bank except SVB, the bank that triggered the event "
              "(`specs_tried.md` #17). R3 also drops Signature; R6 puts SVB back. R5 adds each bank's pre-event beta to KRE. R8-R9 winsorize the ratios at the 1st/99th percentiles. R10 keeps bank-centric companies only. "
              "Robust (HC3) standard errors. Every spec is logged in `specs_tried.md`.", ""]
-    # Economic size of the main coefficient: effect of a one-standard-deviation higher uninsured share.
+    # Economic size of the main coefficient: effect of a one-standard-deviation higher uninsured share,
+    # using the SD of each spec's own estimation sample (self-audit finding I).
     main = samples["main"]
-    sd = main["uninsured_dep_share"].std()
-    for spec in [s for s in SPECS if s.startswith(("R1", "R6", "R3"))]:
+    for spec in [s for s in SPECS if s.split()[0] in MAGNITUDE_SPECS]:
+        formula, sample = SPECS[spec]
+        sd = samples[sample]["uninsured_dep_share"].std()
         c = res[(res["spec"] == spec) & (res["variable"] == "uninsured_dep_share")].iloc[0]
         lines.append(f"- **Magnitude, {spec.split()[0]}:** a one-SD higher uninsured share ({sd:.1%} of domestic deposits, "
-                     f"main sample) goes with a {c.coef * sd:+.1%} BHAR over the three days (coefficient {c.coef:.3f}, p = {c.p:.3f}).")
+                     f"SD in this spec's own sample of {int(c.n)}) goes with a {c.coef * sd:+.1%} BHAR over the three days "
+                     f"(coefficient {c.coef:.3f}, p = {c.p:.3f}).")
     lines += [f"- The average main-sample bank's BHAR was {main['bhar_0_2'].mean():.1%} (median {main['bhar_0_2'].median():.1%}).", ""]
     for name, g in res.groupby("spec", sort=False):
         lines += [f"## {name}", f"N = {g['n'].iloc[0]}, R-squared = {g['r2'].iloc[0]:.3f}", "",

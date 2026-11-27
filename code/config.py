@@ -74,6 +74,23 @@ KRE_END = "2023-03-31"
 KRE_PRICES = RAW / "kre_daily.csv"   # committed to git (the one raw file that is): yfinance re-adjusts it on every download
 KRE_SHA256 = "9a1066c131e9a4fb4f585f48b8685ca5ea5afdcf67dfe19e4f7569ca5d2af046"  # the file that built the outputs
 
+# Inputs that must be byte-identical on every run (self-audit finding C), checked by code/check_inputs.py right
+# after the downloads, before any result is computed. These are the files that built the committed outputs:
+# the licensed CRSP files and the manual FFIEC NIC downloads (placed by hand), the NY Fed link (a fixed vintage
+# at a fixed URL) and the committed KRE prices. The FDIC API files aren't pinned, because the FDIC revises old
+# data (README threat 2); their hashes are recorded in outputs/input_hashes.csv on every run instead.
+PINNED_INPUTS = {
+    "data/raw/crsp/crsp_daily_2022_2023.csv": "b4d663380282f48ddf213939f9529311740336fc2a9ddc504f68351125e3163c",
+    "data/raw/crsp/crsp_delistings.csv": "7832748f6be6cec1f2f3da241014e0eb815cf4b01a84726cb311d0b8fcc38c1d",
+    "data/raw/crsp/crsp_market_vwretd.csv": "61abf088bb07522256c8a605c4d2e1c5e6cf696e872d42734139b7e48a779f0a",
+    "data/raw/nic/CSV_RELATIONSHIPS.zip": "3506ee44a961ac0c011ac39056ad3b7c8e84affa685dd476b59466a73a7c392a",
+    "data/raw/nic/CSV_ATTRIBUTES_ACTIVE.zip": "5c4b86978d12fbfe0a9534305f967b5452ffa8c982658a3e46dc499807c5d7f3",
+    "data/raw/nic/CSV_ATTRIBUTES_CLOSED.zip": "90aa167bfd1faa41e802e76da4462aac92ad18b3455a0fdee9e731959a12704f",
+    "data/raw/nyfed_crsp_frb_link.csv": "8c6d308d6817bcebb1eefbe20d65e9753315ad405cd2a5850030391ef462b26d",
+    "data/raw/kre_daily.csv": KRE_SHA256,
+}
+INPUT_MANIFEST = OUTPUTS / "input_hashes.csv"
+
 # Main sample (specs_tried.md #17, instructor audit A2): SVB is the event itself, not a response to it,
 # so it is left out of the main sample. Signature stays in, with its -100% delisting return.
 EVENT_TRIGGER_TICKERS = ["SIVB"]
