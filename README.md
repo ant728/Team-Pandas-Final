@@ -18,7 +18,7 @@
 3. Download three FFIEC NIC files (CSV) from the [NIC data download page](https://www.ffiec.gov/npw/FinancialReport/DataDownload), **Relationships**, **Attributes- Active** and **Attributes- Closed**, and save the ZIPs in `data/raw/nic/` with their default names. It's public, but the site blocks scripts with a CAPTCHA, so this is a manual step.
 4. `python run_all.py`
 
-`run_all.py` downloads everything else, builds the dataset, runs the regressions, and runs the hand checks. It stops if any check fails. If yfinance can't deliver the three cross-check banks, the run continues and those checks are marked SKIPPED. KRE's daily prices (the regional-bank ETF used for `kre_beta`) are **committed** in `data/raw/kre_daily.csv`, because yfinance re-adjusts them slightly on every download; step 2 doesn't re-download them, and step 3 stops if the file's sha256 doesn't match `config.KRE_SHA256`.
+`run_all.py` downloads everything else, builds the dataset, runs the regressions, and runs the hand checks. It stops if any check fails. If yfinance can't deliver the three cross-check banks, the run continues and those checks are marked SKIPPED. KRE's daily prices (the regional-bank ETF used for `kre_beta`) are **committed** in `data/raw/kre_daily.csv`, because yfinance re-adjusts them slightly on every download; step 2 doesn't re-download them, and step 3 stops if the file's sha256 doesn't match `config.KRE_SHA256`. **Every raw input is hashed** before anything is computed (`code/check_inputs.py`, right after the downloads): the CRSP files, the NIC files, the NY Fed link and KRE are pinned to the sha256 of the files that built the committed outputs (`config.PINNED_INPUTS`), and the run stops if any of them differs. The FDIC API files aren't pinned, because the FDIC revises old data (threat 2); their hashes go into [`outputs/input_hashes.csv`](outputs/input_hashes.csv) on every run, so `git diff` shows which input changed.
 
 Current outputs:
 - [`outputs/final_dataset.csv`](outputs/final_dataset.csv): all 343 entities, with flags for why any are out of the sample
@@ -44,6 +44,7 @@ Pages: Intro, Method, March 2023 Results (scatter, bank inspector, and the faile
 | 0 | `code/00_build_universe.py` | NY Fed CRSP–FRB link | `data/processed/universe_20221231.csv` (one row per entity), `requests/crsp_permcos.csv` |
 | 1 | `code/01_download_fdic.py` | FDIC API | `data/raw/fdic_financials_20221231.csv` (one row per bank), `data/raw/fdic_institutions.csv`, `data/raw/fdic_failures_2023.csv` |
 | 2 | `code/02_download_prices.py` | yfinance | `data/raw/kre_daily.csv` (KRE, for `kre_beta`), `data/raw/prices_check.csv` (3 banks, cross-check only) |
+| — | `code/check_inputs.py` | every file in `data/raw/` | `outputs/input_hashes.csv` (sha256 of every raw input); stops if a pinned input (CRSP, NIC, NY Fed link, KRE) differs |
 | 3 | `code/03_crsp_returns.py` | `data/raw/crsp/`, KRE | `data/processed/bank_returns.csv` (one row per bank: BHAR, CAR, market beta, KRE beta), `data/interim/crsp_event_days.csv` (git-ignored) |
 | 4 | `code/04_build_dataset.py` | steps 0, 1, 3, NIC files | `data/processed/bank_measures.csv`, `data/processed/bank_entity_map.csv`, `outputs/final_dataset.csv` |
 | 5 | `code/05_regressions.py` | `outputs/final_dataset.csv` | `outputs/regressions.*`, `outputs/summary_stats.csv` |
@@ -132,7 +133,7 @@ STATUS.md            # Checkpoint 1 memo
 specs_tried.md       # every specification we run
 run_all.py           # rebuilds everything from raw inputs
 requirements.txt
-code/                # config.py, 00_build_universe ... 10_placebo_windows (see Pipeline); wrds/pull_crsp.do (the CRSP pull)
+code/                # config.py, 00_build_universe ... 10_placebo_windows, check_inputs (see Pipeline); wrds/pull_crsp.do (the CRSP pull)
 requests/            # the PERMCO list we sent for the CRSP pull
 data/raw/            # git-ignored; recreated by the download code, except crsp/ (licensed) and nic/ (manual FFIEC downloads)
 data/interim/        # git-ignored; row-level CRSP event-day returns

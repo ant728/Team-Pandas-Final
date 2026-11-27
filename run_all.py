@@ -8,6 +8,7 @@ STEPS = [
     "00_build_universe.py",
     "01_download_fdic.py",
     "02_download_prices.py",
+    "check_inputs.py",     # every raw input hashed; the pinned ones must match before anything is computed
     "03_crsp_returns.py",
     "04_build_dataset.py",
     "05_regressions.py",

@@ -48,10 +48,10 @@ Target: the final audit (presentations Dec 1/3). Anything that changes the sampl
 | Issue | Plan | Owner |
 |---|---|---|
 | A. Inference with one event | Placebo windows: run R1 on many non-event three-day windows in 2022 and compare the March coefficient to that distribution. **Done Nov 27** (`specs_tried.md` #28, step 10): placebo p = 0.084, so R1 is borderline rather than significant at 5%; README threat 10. | Morgan |
-| C. Remaining inputs | Record full sha256 hashes for every raw input, especially the manual CRSP and NIC files, and check them in the pipeline the way step 3 checks KRE. | Ryan |
+| C. Remaining inputs | Record full sha256 hashes for every raw input, especially the manual CRSP and NIC files, and check them in the pipeline the way step 3 checks KRE. **Done Nov 27:** `code/check_inputs.py` pins CRSP, NIC, the NY Fed link and KRE (`config.PINNED_INPUTS`) and writes every input's hash to `outputs/input_hashes.csv`. | Ryan |
 | E. Dated numbers in the proposal | One line at the top of `PROPOSAL.md` saying its numbers are from Nov 14 and pointing to the README for current results. The proposal's text stays as written. | Andrew |
 | G. Dashboard labels | Update the header badge and footer, retake the A2 screenshot, and show the main-sample count (332) next to the in-sample count. | Mason |
-| I. Magnitude SDs | Use each spec's own sample SD. | Andrew |
+| I. Magnitude SDs | Use each spec's own sample SD. **Done Nov 27** (`code/05_regressions.py`): only R10's magnitude moves, from −2.1% to −2.0%. | Andrew |
 
 ## 3. The 10-point checklist (`00_PROJECT_SEEDS`)
 
