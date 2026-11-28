@@ -295,3 +295,62 @@ export function parseTodayScreen(text) {
     sec_loss_to_equity: toNumber(row.sec_loss_to_equity), flag_top10: toBool(row.flag_top10),
   }));
 }
+
+function readStrictTable(text, required, what) {
+  const [header = [], ...records] = csvRecords(text);
+  const headers = header.map((value) => value.trim());
+  const missing = required.filter((name) => !headers.includes(name));
+  if (missing.length) throw new Error(`Missing ${what} columns: ${missing.join(", ")}.`);
+  if (headers.some((name) => !name)) throw new Error(`The ${what} CSV has an empty column name.`);
+  if (new Set(headers).size !== headers.length) throw new Error(`The ${what} CSV has duplicate column names.`);
+  if (!records.length) throw new Error(`The ${what} CSV has no rows.`);
+  return records.map((record, index) => {
+    if (record.length !== headers.length) {
+      throw new Error(`${what} record ${index + 2} has ${record.length} columns; expected ${headers.length}.`);
+    }
+    return Object.fromEntries(headers.map((name, i) => [name, record[i].trim()]));
+  });
+}
+
+function finiteNumber(value, name, label) {
+  const number = Number(value);
+  if (!decimal.test(value) || !Number.isFinite(number)) {
+    throw new Error(`${label} has an invalid number in ${name}.`);
+  }
+  return number;
+}
+
+/** Step 10's placebo windows, preserving the published non-overlap flag. */
+export function parsePlaceboCsv(text) {
+  const numbers = ["n", "coef", "se", "t", "p", "mean_bhar"];
+  const dates = new Set();
+  return readStrictTable(text, ["day0", ...numbers, "non_overlapping"], "Placebo").map((row, index) => {
+    const label = `Placebo record ${index + 2}`;
+    const date = /^\d{4}-\d{2}-\d{2}$/.test(row.day0) ? new Date(`${row.day0}T00:00:00Z`) : null;
+    if (!date || !Number.isFinite(date.valueOf()) || date.toISOString().slice(0, 10) !== row.day0) {
+      throw new Error(`${label} needs a valid YYYY-MM-DD day0 date.`);
+    }
+    if (dates.has(row.day0)) throw new Error(`${label} repeats day0 ${row.day0}.`);
+    dates.add(row.day0);
+    const out = { day0: row.day0 };
+    for (const name of numbers) out[name] = finiteNumber(row[name], name, label);
+    if (!Number.isSafeInteger(out.n) || out.n <= 0) throw new Error(`${label} needs a positive integer sample size.`);
+    if (out.se < 0) throw new Error(`${label} has a negative standard error.`);
+    if (out.p < 0 || out.p > 1) throw new Error(`${label} has a p-value outside [0, 1].`);
+    const nonOverlapping = row.non_overlapping.toLowerCase();
+    if (nonOverlapping !== "true" && nonOverlapping !== "false") {
+      throw new Error(`${label} has an invalid non_overlapping flag; expected True or False.`);
+    }
+    out.non_overlapping = nonOverlapping === "true";
+    return out;
+  });
+}
+
+/** The real-event R1 uninsured-deposit coefficient and t-statistic used as the placebo benchmark. */
+export function parsePlaceboBenchmark(text) {
+  const matches = readStrictTable(text, ["spec", "variable", "t", "coef"], "Regression")
+    .filter((row) => row.spec.startsWith("R1 ") && row.variable === "uninsured_dep_share");
+  if (matches.length !== 1) throw new Error("The placebo benchmark needs exactly one R1 uninsured-deposit row.");
+  const row = matches[0];
+  return { t: finiteNumber(row.t, "t", "Placebo benchmark"), coef: finiteNumber(row.coef, "coef", "Placebo benchmark") };
+}

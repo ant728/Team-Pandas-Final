@@ -1,5 +1,5 @@
 import { parseTodayScreen, parseTodaySummary } from "./data.mjs";
-import { parseDashboardCsv, parseRegressionComparisons, parseCoefficientComparisons, parseScorecardCsv, parseScreenCsv } from "./data.mjs";
+import { parseDashboardCsv, parseRegressionComparisons, parseCoefficientComparisons, parseScorecardCsv, parseScreenCsv, parsePlaceboCsv, parsePlaceboBenchmark } from "./data.mjs";
 
 const byId = (id) => document.getElementById(id);
 const pages = ["intro", "method", "results", "screen"];
@@ -424,6 +424,7 @@ async function loadRegressionComparisons() {
     const response = await fetch(url, { cache: "no-store" });
     if (!response.ok) throw new Error("Regression output returned HTTP " + response.status + ".");
     const text = await response.text();
+    loadPlaceboNote(text);
     const comparisons = parseRegressionComparisons(text);
     const rows = comparisons.map((comparison) => {
       const tr = element("tr");
@@ -444,6 +445,43 @@ async function loadRegressionComparisons() {
   } catch (error) {
     byId("regression-status").textContent = "Regression comparison unavailable: " + error.message;
     byId("coefficient-status").textContent = "Coefficient estimates unavailable: " + error.message;
+    byId("placebo-note").textContent = "Placebo test unavailable: regression output could not be loaded or validated.";
+  }
+}
+
+async function loadPlaceboNote(regressionText) {
+  const note = byId("placebo-note");
+  try {
+    const main = parsePlaceboBenchmark(regressionText);
+    const response = await fetch(new URL("../outputs/placebo_windows.csv", import.meta.url), { cache: "no-store" });
+    if (!response.ok) throw new Error("Placebo output could not be loaded.");
+    const windows = parsePlaceboCsv(await response.text());
+    const nonOverlapping = windows.filter((row) => row.non_overlapping);
+    if (!nonOverlapping.length) throw new Error("No non-overlapping windows.");
+    const tailShare = (rows) => rows.filter((row) => Math.abs(row.t) >= Math.abs(main.t)).length / rows.length;
+    const placeboP = tailShare(windows);
+    const alpha = 0.05;
+    const falsePositiveRate = windows.filter((row) => row.p < alpha).length / windows.length;
+    const mostNegative = Math.min(...windows.map((row) => row.coef));
+    const asNegative = windows.filter((row) => row.coef <= main.coef).length;
+    const years = [...new Set(windows.map((row) => row.day0.slice(0, 4)))].join(", ");
+    const pValue = new Intl.NumberFormat("en-US", { minimumFractionDigits: 3, maximumFractionDigits: 3 });
+    const share = new Intl.NumberFormat("en-US", { style: "percent", maximumFractionDigits: 1 });
+    const interpretation = placeboP < alpha ? "significant at the nominal threshold"
+      : placeboP < 2 * alpha ? "only borderline significant" : "not significant at the nominal threshold";
+    const comparison = asNegative === 0 ? "No placebo window had a coefficient as negative as March’s"
+      : asNegative + " placebo windows had coefficients at least as negative as March’s";
+    note.textContent = "Placebo test: across " + windows.length + " three-day windows in " + years
+      + ", before the March bank run, this regression looks significant " + share.format(falsePositiveRate)
+      + " of the time (p < " + pValue.format(alpha) + ", vs. " + share.format(alpha) + " expected)."
+      + " Ranked by absolute t-statistic against them, March’s result has a placebo p-value of " + pValue.format(placeboP)
+      + ", so the all-window comparison is " + interpretation + ". Using the " + nonOverlapping.length
+      + " non-overlapping windows gives " + pValue.format(tailShare(nonOverlapping)) + ". "
+      + comparison + " (most negative: " + coefficient.format(mostNegative)
+      + ", versus March’s " + coefficient.format(main.coef) + "). The full set of windows overlaps and is not independent;"
+      + " this is a descriptive historical comparison.";
+  } catch (error) {
+    note.textContent = "Placebo test unavailable: its output data could not be loaded or validated.";
   }
 }
 
